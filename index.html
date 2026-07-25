@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="ZeroPort — identity-native zero-trust overlay network. Interactive security-operations console demo.">
+<meta property="og:title" content="ZeroPort Console — Live Demo">
+<meta property="og:description" content="Zero ports. Zero trust. Zero blind spots. Walk the six-proof demo.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%F0%9F%9B%A1%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<title>ZeroPort Console — Live Demo</title>
+</head>
+<body>
+<style>
+  :root{
+    --ink:#0A0E14; --panel:#111722; --panel-2:#161E2B; --raise:#1B2534;
+    --line:#233042; --line-soft:#1A2432;
+    --text:#C6D2DE; --muted:#7C8C9C; --dim:#54637560;
+    --cyan:#22D3EE; --cyan-dim:#0E7490;
+    --green:#34D399; --amber:#F5A524; --red:#F5455C; --violet:#A78BFA;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono","Cascadia Code",Consolas,monospace;
+    --sans:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:
+      radial-gradient(1200px 600px at 80% -10%, #12324033, transparent 60%),
+      var(--ink);
+    color:var(--text); font-family:var(--sans);
+    -webkit-font-smoothing:antialiased; line-height:1.5;
+    min-height:100vh;
+  }
+  .wrap{max-width:1180px; margin:0 auto; padding:14px 18px 120px}
+  .mono{font-family:var(--mono); font-variant-numeric:tabular-nums}
+  .lbl{font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); font-weight:500}
+
+  /* top bar */
+  .topbar{display:flex; align-items:center; gap:16px; padding:10px 14px; margin-bottom:14px;
+    background:linear-gradient(180deg,var(--panel-2),var(--panel)); border:1px solid var(--line);
+    border-radius:12px}
+  .brand{display:flex; align-items:baseline; gap:9px}
+  .logo{font-weight:700; font-size:18px; letter-spacing:-.02em; color:#EAF2F8}
+  .logo b{color:var(--cyan)}
+  .plane{font-size:11px; color:var(--muted); border-left:1px solid var(--line); padding-left:12px}
+  .plane b{color:var(--text); font-weight:500}
+  .spacer{flex:1}
+  .pill{display:inline-flex; align-items:center; gap:7px; font-size:12px; font-weight:500;
+    padding:6px 11px; border-radius:999px; border:1px solid; white-space:nowrap}
+  .pill .dot{width:7px; height:7px; border-radius:50%}
+  .chain-ok{color:var(--green); border-color:#34D39955; background:#34D39914}
+  .chain-ok .dot{background:var(--green); box-shadow:0 0 8px var(--green)}
+  .chain-bad{color:var(--red); border-color:#F5455C66; background:#F5455C1a}
+  .chain-bad .dot{background:var(--red); box-shadow:0 0 8px var(--red)}
+  .clock{font-size:12px; color:var(--muted)}
+
+  /* grid */
+  .grid{display:grid; grid-template-columns:1.55fr 1fr; gap:14px}
+  @media(max-width:860px){ .grid{grid-template-columns:1fr} }
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px}
+  .card h3{margin:0 0 12px; font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--muted); font-weight:600; display:flex; align-items:center; gap:8px}
+  .card h3 .k{color:var(--cyan)}
+
+  /* link lane */
+  .lane{position:relative; display:flex; align-items:center; justify-content:space-between;
+    gap:10px; padding:20px 8px 8px}
+  .node{width:118px; text-align:center; z-index:2}
+  .node .ico{width:52px; height:52px; margin:0 auto 8px; border-radius:14px;
+    display:flex; align-items:center; justify-content:center; font-size:22px;
+    background:var(--panel-2); border:1px solid var(--line); transition:.35s}
+  .node .nm{font-family:var(--mono); font-size:12.5px; color:#E7EEF4; font-weight:500}
+  .node .np{font-family:var(--mono); font-size:10px; color:var(--muted); margin-top:2px}
+  .node .st{margin-top:7px; font-size:10px; letter-spacing:.1em; text-transform:uppercase; font-weight:600}
+  .st.active{color:var(--green)} .st.revoked{color:var(--red)} .st.expired{color:var(--amber)}
+  .st.service{color:var(--cyan)} .st.offline{color:var(--muted)}
+  .node.dead .ico{border-color:#F5455C66; background:#F5455C12; filter:grayscale(.3)}
+  .node.gone{opacity:.35}
+
+  .path{position:relative; flex:1; height:60px; display:flex; align-items:center}
+  .wire{position:relative; width:100%; height:3px; border-radius:2px; background:var(--line)}
+  .wire::after{content:""; position:absolute; inset:0; border-radius:2px; transition:.4s}
+  .wire.onion::after{background:repeating-linear-gradient(90deg,var(--amber) 0 8px,transparent 8px 16px);
+    animation:march 1s linear infinite; opacity:.9}
+  .wire.direct::after{background:linear-gradient(90deg,var(--cyan),var(--green)); box-shadow:0 0 14px #22D3EE66}
+  .wire.dead::after{background:var(--red); opacity:.5}
+  @keyframes march{to{background-position:16px 0}}
+  .pathbadge{position:absolute; top:-16px; left:50%; transform:translateX(-50%);
+    font-size:10px; letter-spacing:.14em; font-weight:700; text-transform:uppercase;
+    padding:3px 10px; border-radius:999px; white-space:nowrap; transition:.3s}
+  .pb-onion{color:var(--amber); background:#F5A52418; border:1px solid #F5A52455}
+  .pb-direct{color:var(--green); background:#34D39918; border:1px solid #34D39955}
+  .pb-dead{color:var(--red); background:#F5455C18; border:1px solid #F5455C55}
+  .flow{position:absolute; top:50%; width:7px; height:7px; border-radius:50%; margin-top:-3.5px;
+    background:#EAF2F8; box-shadow:0 0 10px #fff; opacity:0}
+  .lane.live .flow{opacity:1; animation:zip 1.4s linear infinite}
+  .lane.live.fast .flow{animation-duration:.5s}
+  @keyframes zip{from{left:2%}to{left:98%}}
+
+  /* live link stats */
+  .stat{display:flex; align-items:baseline; gap:8px; margin-bottom:4px}
+  .lat{font-family:var(--mono); font-size:46px; font-weight:600; letter-spacing:-.02em;
+    color:var(--amber); transition:color .4s; line-height:1}
+  .lat.good{color:var(--green)} .lat.dead{color:var(--red)}
+  .lat .u{font-size:16px; color:var(--muted); font-weight:400}
+  .kv{display:flex; justify-content:space-between; font-size:12px; padding:7px 0; border-top:1px solid var(--line-soft)}
+  .kv .k{color:var(--muted)} .kv .v{font-family:var(--mono); color:var(--text)}
+  .bar{height:6px; border-radius:3px; background:var(--panel-2); overflow:hidden; margin-top:3px}
+  .bar i{display:block; height:100%; width:8%; border-radius:3px; background:var(--cyan); transition:width .5s}
+
+  /* roster */
+  .roster{display:flex; flex-wrap:wrap; gap:8px}
+  .chip{display:flex; align-items:center; gap:8px; padding:7px 10px; border-radius:9px;
+    background:var(--panel-2); border:1px solid var(--line); font-size:11.5px}
+  .chip .d{width:7px; height:7px; border-radius:50%; background:var(--green)}
+  .chip.gw .d{background:var(--violet)} .chip.dead .d{background:var(--red)}
+  .chip .n{font-family:var(--mono); color:var(--text)}
+  .chip .tag{font-size:9px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted)}
+
+  /* enrollment */
+  .empty{font-size:12px; color:var(--muted); padding:10px 2px; font-style:italic}
+  .enr{border:1px solid var(--line); border-radius:10px; padding:11px; background:var(--panel-2)}
+  .enr.blocked{border-color:#F5455C55; background:#F5455C0e}
+  .enr .row1{display:flex; align-items:center; justify-content:space-between; gap:8px}
+  .enr .who{font-family:var(--mono); font-size:12.5px; color:#E7EEF4}
+  .enr .badge{font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; font-weight:700; padding:3px 8px; border-radius:6px}
+  .b-block{color:var(--red); background:#F5455C1e}
+  .b-ok{color:var(--green); background:#34D3991e}
+  .sig{display:flex; align-items:center; gap:6px; margin-top:10px}
+  .sig .s{flex:1; height:5px; border-radius:3px; background:var(--line)}
+  .sig .s.on{background:var(--green); box-shadow:0 0 8px #34D39966}
+  .sig .txt{font-family:var(--mono); font-size:11px; color:var(--muted)}
+  .minibtn{margin-top:11px; width:100%; font-family:var(--sans); font-size:12px; font-weight:500;
+    padding:8px; border-radius:8px; cursor:pointer; color:var(--cyan);
+    background:#22D3EE12; border:1px solid #22D3EE44; transition:.2s}
+  .minibtn:hover{background:#22D3EE22}
+
+  /* terminal */
+  .term{background:#070A0F; border:1px solid var(--line); border-radius:10px; margin-top:12px;
+    font-family:var(--mono); font-size:12px; overflow:hidden; display:none}
+  .term.show{display:block}
+  .term .hd{display:flex; align-items:center; gap:7px; padding:7px 11px; background:#0D131C; border-bottom:1px solid var(--line)}
+  .term .hd .dt{width:10px;height:10px;border-radius:50%;background:#31404F}
+  .term .hd .tt{margin-left:6px; font-size:10.5px; color:var(--muted); letter-spacing:.05em}
+  .term .body{padding:11px 13px; min-height:78px; line-height:1.7; color:#9FB0C0}
+  .term .body .cmd{color:#EAF2F8} .term .body .g{color:var(--green)} .term .body .r{color:var(--red)}
+  .term .body .p{color:var(--cyan)}
+
+  /* flow log */
+  .logcard{margin-top:14px}
+  .logwrap{max-height:210px; overflow-y:auto; border-radius:8px; background:#0A0E15; border:1px solid var(--line-soft)}
+  .logwrap::-webkit-scrollbar{width:8px} .logwrap::-webkit-scrollbar-thumb{background:var(--line); border-radius:4px}
+  .logrow{display:grid; grid-template-columns:64px 1fr auto; gap:12px; align-items:center;
+    padding:8px 12px; border-bottom:1px solid var(--line-soft); font-family:var(--mono); font-size:12px}
+  .logrow:last-child{border-bottom:none}
+  .logrow .t{color:var(--dim); color:#5B6B7C}
+  .logrow .m{color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .logrow .m .id{color:var(--cyan)} .logrow .m .pol{color:var(--violet)}
+  .logrow .v{font-size:10px; letter-spacing:.08em; text-transform:uppercase; font-weight:700; padding:2px 8px; border-radius:5px}
+  .v-allow{color:var(--green); background:#34D39916} .v-deny{color:var(--red); background:#F5455C18}
+  .v-info{color:var(--muted); background:#54637522} .v-warn{color:var(--amber); background:#F5A52418}
+  .logrow.tampered{background:#F5455C12; animation:flash 1.4s ease}
+  .logrow.tampered .m{color:var(--red)} .logrow.tampered .m::before{content:"⚠ "; }
+  @keyframes flash{0%,100%{background:#F5455C12}50%{background:#F5455C2e}}
+  .logrow.fresh{animation:slidein .4s ease}
+  @keyframes slidein{from{opacity:0; transform:translateY(-4px)}to{opacity:1}}
+
+  /* remote */
+  .remote{position:fixed; left:0; right:0; bottom:0; z-index:20;
+    background:linear-gradient(180deg,#0A0E14cc,var(--ink)); backdrop-filter:blur(8px);
+    border-top:1px solid var(--line); padding:11px 18px}
+  .remote-in{max-width:1180px; margin:0 auto; display:flex; align-items:center; gap:9px; flex-wrap:wrap}
+  .narr{flex:1; min-width:220px; font-size:12.5px; color:var(--muted); font-family:var(--mono)}
+  .narr b{color:var(--cyan); font-weight:500}
+  .pbtn{display:inline-flex; align-items:center; gap:7px; font-family:var(--sans); font-size:12.5px;
+    font-weight:500; padding:8px 12px; border-radius:9px; cursor:pointer; color:var(--text);
+    background:var(--panel-2); border:1px solid var(--line); transition:.18s; white-space:nowrap}
+  .pbtn:hover{border-color:var(--cyan); color:#EAF2F8; background:var(--raise)}
+  .pbtn .num{font-family:var(--mono); font-size:11px; color:var(--cyan); font-weight:700}
+  .pbtn.done{border-color:#34D39955}
+  .pbtn.done .num{color:var(--green)}
+  .pbtn:disabled{opacity:.4; cursor:not-allowed}
+  .pbtn.play{background:#22D3EE16; border-color:#22D3EE55; color:var(--cyan)}
+  .pbtn.reset{background:transparent; color:var(--muted)}
+  .hint{font-size:11px; color:var(--muted); margin:6px 2px 0}
+</style>
+
+<div class="wrap">
+  <div class="topbar">
+    <div class="brand">
+      <span class="logo">Zero<b>Port</b></span>
+      <span class="plane">Plane 4 · <b>Assurance &amp; Operations</b></span>
+    </div>
+    <span class="spacer"></span>
+    <span id="chain" class="pill chain-ok"><span class="dot"></span>Audit chain intact</span>
+    <span class="clock mono" id="clock">--:--:--</span>
+  </div>
+
+  <div class="grid">
+    <!-- LEFT -->
+    <div>
+      <div class="card">
+        <h3><span class="k">◇</span> Live topology</h3>
+        <div class="lane live" id="lane">
+          <div class="node" id="nodeA">
+            <div class="ico">💻</div>
+            <div class="nm">alice-laptop</div>
+            <div class="np">npub1q7x…9k4</div>
+            <div class="st active">active</div>
+          </div>
+          <div class="path">
+            <div class="pathbadge pb-onion" id="pbadge">via onion</div>
+            <div class="wire onion" id="wire"></div>
+            <div class="flow"></div>
+          </div>
+          <div class="node" id="nodeB">
+            <div class="ico">🗄️</div>
+            <div class="nm">finance-db</div>
+            <div class="np">:5432 · svc</div>
+            <div class="st service">service</div>
+          </div>
+        </div>
+        <div style="border-top:1px solid var(--line-soft); margin-top:6px; padding-top:12px">
+          <div class="lbl" style="margin-bottom:9px">Signed roster</div>
+          <div class="roster" id="roster">
+            <div class="chip"><span class="d"></span><span class="n">alice-laptop</span><span class="tag">host</span></div>
+            <div class="chip"><span class="d"></span><span class="n">finance-db</span><span class="tag">service</span></div>
+            <div class="chip"><span class="d"></span><span class="n">bob-vm</span><span class="tag">host</span></div>
+            <div class="chip gw"><span class="d"></span><span class="n">gw-printer</span><span class="tag">gateway</span></div>
+          </div>
+        </div>
+        <div class="term" id="term">
+          <div class="hd"><span class="dt"></span><span class="dt"></span><span class="dt"></span><span class="tt">attacker@internet — scanning public IP</span></div>
+          <div class="body mono" id="termbody"></div>
+        </div>
+      </div>
+
+      <div class="card logcard">
+        <h3><span class="k">≡</span> Attributed flow log <span style="flex:1"></span><span class="lbl" id="logcount">0 entries</span></h3>
+        <div class="logwrap" id="logwrap"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div>
+      <div class="card">
+        <h3><span class="k">⚡</span> Live link · alice → finance-db</h3>
+        <div class="stat">
+          <span class="lat" id="lat">384</span><span class="u mono">ms</span>
+        </div>
+        <div style="margin-top:12px">
+          <div class="kv"><span class="k">Path</span><span class="v" id="kpath" style="color:var(--amber)">Tor onion (rendezvous)</span></div>
+          <div class="kv"><span class="k">Cipher</span><span class="v">WireGuard · ChaCha20</span></div>
+          <div class="kv"><span class="k">Policy</span><span class="v" id="kpol" style="color:var(--violet)">#7 allow :5432</span></div>
+          <div class="kv"><span class="k">Lease</span><span class="v" id="klease">59m 41s</span></div>
+          <div class="kv" style="border-bottom:none">
+            <span class="k">Throughput</span><span class="v" id="ktput">0.4 MB/s</span>
+          </div>
+          <div class="bar"><i id="tput"></i></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:14px">
+        <h3><span class="k">◈</span> Enrollment queue <span style="flex:1"></span><span class="lbl">2-of-3 quorum</span></h3>
+        <div id="enroll"><div class="empty">No pending enrollments.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <p class="hint">A mock of ZeroPort's security-operations console. Drive the six-proof demo below — click in order, or hit Auto-play. Nothing here talks to a network; it's the stage, wired to act out exactly what the judges would see.</p>
+</div>
+
+<div class="remote">
+  <div class="remote-in">
+    <span class="narr" id="narr">Ready. Baseline: one live link on the slow onion path. <b>Run the six proofs →</b></span>
+    <button class="pbtn" id="p1" onclick="P1()"><span class="num">1</span> Scan</button>
+    <button class="pbtn" id="p2" onclick="P2()"><span class="num">2</span> Upgrade path</button>
+    <button class="pbtn" id="p3" onclick="P3()"><span class="num">3</span> Rogue enroll</button>
+    <button class="pbtn" id="p4" onclick="P4()"><span class="num">4</span> Node offline</button>
+    <button class="pbtn" id="p5" onclick="P5()"><span class="num">5</span> Revoke</button>
+    <button class="pbtn" id="p6" onclick="P6()"><span class="num">6</span> Tamper log</button>
+    <button class="pbtn play" id="pauto" onclick="AUTO()">▶ Auto-play</button>
+    <button class="pbtn reset" onclick="RESET()">↺ Reset</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var $=function(s){return document.querySelector(s)};
+  var leaseSec=3581, leaseTimer=null, autoRunning=false;
+
+  /* clock */
+  function tick(){
+    var d=new Date();
+    $("#clock").textContent=d.toTimeString().slice(0,8);
+  }
+  setInterval(tick,1000); tick();
+
+  /* lease countdown */
+  function fmtLease(s){
+    if(s<=0) return "expired";
+    var m=Math.floor(s/60), r=s%60;
+    return m+"m "+(r<10?"0":"")+r+"s";
+  }
+  function startLease(){
+    stopLease();
+    leaseTimer=setInterval(function(){
+      leaseSec--; $("#klease").textContent=fmtLease(leaseSec);
+      if(leaseSec<=0){ stopLease(); }
+    },1000);
+  }
+  function stopLease(){ if(leaseTimer){clearInterval(leaseTimer); leaseTimer=null;} }
+  startLease();
+
+  /* log */
+  var LOG=[], seq=0;
+  function now(){ return new Date().toTimeString().slice(0,8); }
+  function log(msg, verd){
+    seq++;
+    var w=$("#logwrap");
+    var row=document.createElement("div");
+    row.className="logrow fresh"; row.dataset.seq=seq;
+    var vc={allow:"v-allow",deny:"v-deny",info:"v-info",warn:"v-warn"}[verd]||"v-info";
+    var vt={allow:"allow",deny:"deny",info:"info",warn:"warn"}[verd]||"info";
+    row.innerHTML='<span class="t">'+now()+'</span><span class="m">'+msg+'</span><span class="v '+vc+'">'+vt+'</span>';
+    w.appendChild(row);
+    w.scrollTop=w.scrollHeight;
+    $("#logcount").textContent=seq+" entries";
+    return row;
+  }
+  function seedLog(){
+    $("#logwrap").innerHTML=""; seq=0;
+    log('<span class="id">alice-laptop</span> → finance-db:5432 · <span class="pol">policy #7</span> · via onion · 0.4 MB','allow');
+    log('<span class="id">bob-vm</span> → wiki:443 · <span class="pol">policy #3</span> · via direct · 8.1 MB','allow');
+    log('roster synced · 4 peers · relay wss://relay.zeroport.internal','info');
+  }
+
+  function narr(html){ $("#narr").innerHTML=html; }
+  function mark(id){ var b=$("#"+id); if(b) b.classList.add("done"); }
+
+  /* ---- PROOF 1 : scan ---- */
+  function P1(){
+    mark("p1");
+    var t=$("#term"), body=$("#termbody"); t.classList.add("show"); body.innerHTML="";
+    var lines=[
+      ['<span class="cmd">$ nmap -Pn -p- 203.0.113.44</span>',0],
+      ['Starting Nmap against 203.0.113.44 …',450],
+      ['<span class="r">All 65535 scanned ports are filtered — 0 open.</span>',1400],
+      ['Host looks down. No services to fingerprint.',2100],
+      ['<span class="cmd">$ zeroport connect finance-db</span>',2900],
+      ['<span class="p">rendezvous via onion … authorized. tunnel up.</span>',3700],
+      ['<span class="g">✓ connected — yet nothing was ever listening.</span>',4300]
+    ];
+    lines.forEach(function(L){ setTimeout(function(){
+      body.innerHTML+=L[0]+"<br>"; body.scrollTop=body.scrollHeight;
+    }, L[1]); });
+    log('port scan from 203.0.113.44 · <b>0 open ports</b> · nothing to attack','info');
+    narr('Proof 1 — <b>nmap finds nothing</b>, yet the link still works. No listening port on the internet.');
+  }
+
+  /* ---- PROOF 2 : upgrade onion → direct ---- */
+  function P2(){
+    mark("p2");
+    $("#wire").className="wire direct";
+    var pb=$("#pbadge"); pb.className="pathbadge pb-direct"; pb.textContent="via direct";
+    $("#lane").classList.add("fast");
+    $("#kpath").textContent="Direct WireGuard"; $("#kpath").style.color="var(--green)";
+    var lat=$("#lat"); lat.classList.add("good");
+    var from=384,to=8,t0=null;
+    function step(ts){ if(!t0)t0=ts; var k=Math.min(1,(ts-t0)/900);
+      var e=1-Math.pow(1-k,3); lat.textContent=Math.round(from+(to-from)*e);
+      if(k<1) requestAnimationFrame(step); }
+    requestAnimationFrame(step);
+    $("#tput").style.width="86%"; $("#ktput").textContent="112 MB/s";
+    log('path upgraded <b>onion → direct</b> · latency 384ms → 8ms · Tor left the path','allow');
+    narr('Proof 2 — hole-punched to a <b>direct WireGuard tunnel</b>: 384 ms → 8 ms. This is the whole speed thesis.');
+  }
+
+  /* ---- PROOF 3 : rogue enrollment blocked by quorum ---- */
+  var rogueSigned=false;
+  function P3(){
+    mark("p3"); rogueSigned=false;
+    $("#enroll").innerHTML=
+      '<div class="enr blocked" id="rogue">'+
+        '<div class="row1"><span class="who">rogue-node</span><span class="badge b-block" id="rbadge">Blocked</span></div>'+
+        '<div class="sig"><span class="s on"></span><span class="s" id="s2"></span><span class="s" id="s3"></span>'+
+        '<span class="txt" id="sigtxt">1 / 2 signatures</span></div>'+
+        '<button class="minibtn" id="cosign" onclick="__cosign()">Add 2nd officer signature →</button>'+
+      '</div>';
+    log('enrollment request <span class="id">rogue-node</span> signed by 1 admin · <b>DENIED — quorum 1/2</b>','deny');
+    narr('Proof 3 — a lone admin tries to enroll <b>rogue-node</b>. <b>Refused.</b> Enrollment needs 2-of-3. No single admin can betray the network.');
+  }
+  window.__cosign=function(){
+    if(rogueSigned) return; rogueSigned=true;
+    $("#s2").classList.add("on"); $("#sigtxt").textContent="2 / 2 signatures";
+    var b=$("#rbadge"); b.className="badge b-ok"; b.textContent="Approved";
+    $("#rogue").classList.remove("blocked");
+    var btn=$("#cosign"); btn.remove();
+    log('second officer co-signed · <span class="id">rogue-node</span> enrollment now <b>authorized</b>','allow');
+    narr('With a <b>second officer\'s signature</b> the quorum is met and it proceeds — exactly as designed. One key alone was never enough.');
+  };
+
+  /* ---- PROOF 4 : node offline → lease expires on its own ---- */
+  function P4(){
+    mark("p4");
+    var chip=$("#roster").children[2]; chip.classList.add("dead");
+    chip.querySelector(".tag").textContent="offline";
+    log('<span class="id">bob-vm</span> unreachable · control plane can no longer renew its lease','warn');
+    narr('Proof 4 — <b>bob-vm goes offline.</b> Nobody pressed revoke. Watch its lease run out…');
+    leaseSec=6; $("#klease").textContent=fmtLease(leaseSec); startLease();
+    var t=setInterval(function(){
+      if(leaseSec<=0){
+        clearInterval(t); stopLease();
+        $("#klease").textContent="expired — access withdrawn"; $("#klease").style.color="var(--amber)";
+        log('<span class="id">bob-vm</span> lease <b>expired</b> · access withdrawn automatically · fail-closed','deny');
+        narr('Proof 4 — the lease <b>expired on its own</b>. Offline = no access, with no admin action. Fail-closed by default.');
+      }
+    },300);
+  }
+
+  /* ---- PROOF 5 : unenrolled refused, then instant revoke ---- */
+  function P5(){
+    mark("p5");
+    log('<span class="id">unknown-host</span> (npub1zz…, not on roster) → finance-db:5432 · <b>REFUSED</b>','deny');
+    setTimeout(function(){
+      var nA=$("#nodeA"); nA.classList.add("dead");
+      nA.querySelector(".st").className="st revoked"; nA.querySelector(".st").textContent="revoked";
+      $("#wire").className="wire dead";
+      var pb=$("#pbadge"); pb.className="pathbadge pb-dead"; pb.textContent="link down";
+      $("#lane").classList.remove("live","fast");
+      $("#roster").children[0].classList.add("dead");
+      var lat=$("#lat"); lat.className="lat dead"; lat.textContent="—";
+      $("#tput").style.width="2%"; $("#ktput").textContent="0 MB/s";
+      log('admin quorum <b>revoked</b> <span class="id">alice-laptop</span> · tunnel torn down in 1.2s','deny');
+      narr('Proof 5 — unenrolled node <b>refused + logged</b>; then a revoke kills <b>alice-laptop</b> in seconds.');
+    },700);
+  }
+
+  /* ---- PROOF 6 : tamper the audit log ---- */
+  function P6(){
+    mark("p6");
+    var rows=$("#logwrap").querySelectorAll(".logrow");
+    var target=rows[0]||log("historical entry","allow");
+    target.classList.add("tampered");
+    target.querySelector(".m").innerHTML='alice-laptop → finance-db:5432 · amount overwritten by attacker';
+    var chain=$("#chain"); chain.className="pill chain-bad";
+    chain.innerHTML='<span class="dot"></span>Chain broken at #1 · file swap detected';
+    log('verifier: hash mismatch at entry #1 · published anchor ≠ local head · <b>TAMPER DETECTED</b>','deny');
+    narr('Proof 6 — one line edited <b>and</b> the file swapped. The verifier flags both against the public anchor. Tamper-proof, not just tamper-evident.');
+  }
+
+  /* ---- reset ---- */
+  function RESET(){
+    autoRunning=false;
+    $("#wire").className="wire onion";
+    var pb=$("#pbadge"); pb.className="pathbadge pb-onion"; pb.textContent="via onion";
+    var lane=$("#lane"); lane.className="lane live";
+    var lat=$("#lat"); lat.className="lat"; lat.textContent="384";
+    $("#kpath").textContent="Tor onion (rendezvous)"; $("#kpath").style.color="var(--amber)";
+    $("#tput").style.width="8%"; $("#ktput").textContent="0.4 MB/s";
+    var nA=$("#nodeA"); nA.classList.remove("dead");
+    nA.querySelector(".st").className="st active"; nA.querySelector(".st").textContent="active";
+    $("#term").classList.remove("show");
+    $("#enroll").innerHTML='<div class="empty">No pending enrollments.</div>';
+    var chain=$("#chain"); chain.className="pill chain-ok"; chain.innerHTML='<span class="dot"></span>Audit chain intact';
+    ["#roster"].forEach(function(){});
+    var chips=$("#roster").children;
+    chips[0].classList.remove("dead"); chips[2].classList.remove("dead");
+    chips[2].querySelector(".tag").textContent="host";
+    leaseSec=3581; $("#klease").textContent=fmtLease(leaseSec); $("#klease").style.color="";
+    startLease();
+    ["p1","p2","p3","p4","p5","p6"].forEach(function(id){$("#"+id).classList.remove("done");$("#"+id).disabled=false;});
+    seedLog();
+    narr('Reset. Baseline: one live link on the slow onion path. <b>Run the six proofs →</b>');
+  }
+
+  /* ---- auto-play ---- */
+  function AUTO(){
+    if(autoRunning) return; autoRunning=true; RESET(); autoRunning=true;
+    var steps=[P1,P2,P3,P4,P5,P6], i=0;
+    (function nextStep(){
+      if(!autoRunning || i>=steps.length){autoRunning=false; return;}
+      steps[i++]();
+      setTimeout(nextStep, 5200);
+    })();
+  }
+
+  window.P1=P1;window.P2=P2;window.P3=P3;window.P4=P4;window.P5=P5;window.P6=P6;
+  window.RESET=RESET;window.AUTO=AUTO;
+  seedLog();
+})();
+</script>
+
+</body>
+</html>

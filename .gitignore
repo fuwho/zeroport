@@ -1,0 +1,11 @@
+# Office temp / lock files
+~$*
+*.tmp
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Node (if a build is ever added)
+node_modules/
+.vercel/
