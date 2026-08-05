@@ -9,3 +9,21 @@ Thumbs.db
 # Node (if a build is ever added)
 node_modules/
 .vercel/
+
+# SECRETS - never commit these.
+# hs_ed25519_secret_key IS the onion service's identity. Anyone holding it can
+# impersonate the service at that .onion address.
+demo/tor/hs/
+demo/tor/data/
+demo/tor/torrc
+*_secret_key
+
+# WireGuard configs contain private keys
+demo/wg/*.conf
+demo/vps/*.conf
+
+# Generated at runtime
+demo/audit-*.log
+demo/audit-*.log.ots
+demo/audit-*.log.anchor.json
+demo/dashboard/boot.log
