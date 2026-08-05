@@ -15,6 +15,7 @@ const zp = require('./lib/zp');
 const noise = require('./lib/noise');
 const nostr = require('./lib/nostr');
 const nclient = require('./lib/nclient');
+const socks = require('./lib/socks');
 
 const cfg = JSON.parse(process.argv[2]);
 
@@ -28,6 +29,22 @@ const sessions = new Map();      // inbound  peerId -> { keys, ctr }
 const outSessions = new Map();   // outbound targetId -> { keys, ep, ctr }
 const pending = new Map();
 const seenTimestamps = new Map();// Noise replay window, per peer static key
+
+// Reaching the rendezvous. When cfg.torSocks is set the request goes through
+// the Tor SOCKS port to an onion address, so the introduction crosses the real
+// Tor network. Everything after the introduction is unchanged - the tunnel is
+// still direct, and Tor is not in the data path.
+async function rdv(pathAndQuery, opts = {}) {
+  if (cfg.torSocks) {
+    const r = await socks.request({
+      socksPort: cfg.torSocks, host: cfg.onion, port: 80,
+      method: opts.method || 'GET', path: pathAndQuery, body: opts.body || null,
+    });
+    return { ok: r.status >= 200 && r.status < 300, status: r.status, json: async () => JSON.parse(r.body) };
+  }
+  const r = await fetch(cfg.rendezvous + pathAndQuery, opts);
+  return r;
+}
 
 const emit = (o) => console.log('#EVT ' + JSON.stringify(o));
 const sock = dgram.createSocket('udp4');
@@ -169,7 +186,7 @@ async function handshake(targetId) {
   await refreshRoster();
   const target = peerById(targetId);
   if (!target) return { ok: false, reason: 'target not on roster' };
-  const lr = await fetch(`${cfg.rendezvous}/lookup?id=${targetId}`);
+  const lr = await rdv(`/lookup?id=${targetId}`);
   if (!lr.ok) return { ok: false, reason: 'peer endpoint unknown' };
   const ep = await lr.json();
 
@@ -206,7 +223,7 @@ async function send(targetId, route, port, payload) {
     r = await ask(s.ep.host, s.ep.port, packet);
     if (r.t === 'timeout') return { ok: false, reason: 'no response (dropped)' };
   } else {
-    const hr = await fetch(`${cfg.rendezvous}/relay?to=${targetId}`, { method: 'POST', body: JSON.stringify(packet) });
+    const hr = await rdv(`/relay?to=${targetId}`, { method: 'POST', body: JSON.stringify(packet) });
     if (!hr.ok) return { ok: false, reason: 'relay failed' };
     r = (await hr.json()).reply;
     if (!r) return { ok: false, reason: 'no response' };
@@ -219,9 +236,14 @@ async function send(targetId, route, port, payload) {
 // ---------------- control ----------------
 sock.bind(0, cfg.host || '127.0.0.1', async () => {
   const a = sock.address();
-  await fetch(cfg.rendezvous + '/announce', {
-    method: 'POST', body: JSON.stringify({ id: ME, host: a.address, port: a.port }),
-  }).catch(() => {});
+  // retry: over Tor the first request may race descriptor publication
+  for (let i = 0; i < 6; i++) {
+    try {
+      const r = await rdv('/announce', { method: 'POST', body: JSON.stringify({ id: ME, host: a.address, port: a.port }) });
+      if (r.ok) break;
+    } catch {}
+    if (i < 5) await new Promise((z) => setTimeout(z, 4000));
+  }
   audit.append({ type: 'agent_start', id: ME, udp: a.port, tcpListeners: 0 });
   console.log('#READY ' + JSON.stringify({
     name: cfg.name, id: ME, idPub: id.pub, staticPub: stat.pub.toString('hex'), udpPort: a.port,

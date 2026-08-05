@@ -20,6 +20,7 @@ const frost = require('./lib/frost');
 const nostr = require('./lib/nostr');
 const nclient = require('./lib/nclient');
 const anchorSvc = require('./lib/anchor');
+const torSvc = require('./tor/start-tor');
 
 const DIR = __dirname;
 const kids = [];
@@ -34,6 +35,7 @@ function lanIP() {
 const argv = process.argv.slice(2);
 const argOf = (k) => { const i = argv.indexOf(k); return i >= 0 ? argv[i + 1] : null; };
 const HOST = argOf('--host') || (argv.includes('--local') ? '127.0.0.1' : lanIP());
+const USE_TOR = argv.includes('--tor');
 const ON_LAN = HOST !== '127.0.0.1';
 const RELAY_WS = `ws://${HOST}:8801`;
 const RDV = `http://${HOST}:8802`;
@@ -213,8 +215,27 @@ async function scan(host, ports) {
   res(`directory   — who exists and what they may reach   ${HOST}:8801`);
   res(`rendezvous  — how two peers find each other        ${HOST}:8802`);
 
+  let tor = null;
+  if (USE_TOR) {
+    console.log('');
+    res('Publishing the rendezvous as an onion service so the introduction');
+    res('crosses the Tor network. This takes a minute the first time.');
+    try {
+      tor = await torSvc.start(8802, {
+        host: HOST,
+        onLog: (l) => { const m = l.match(/bootstrap (d+)%/); if (m) res(`   Tor ${m[1]}%`); },
+      });
+      res(`The rendezvous now answers at ${tor.onion}`);
+      res('It has no address on this network that anyone can scan for.');
+    } catch (e) {
+      res(`Tor could not start (${e.message}). Continuing without it.`);
+      tor = null;
+    }
+  }
+
   const mk = (name, servicePort) => launch('agent.js', [JSON.stringify({
     name, host: HOST, relay: RELAY_WS, rendezvous: RDV,
+    ...(tor ? { torSocks: tor.socksPort, onion: tor.onion } : {}),
     groupPub: GROUP.groupPub, officerPubs,
     log: path.join(DIR, `audit-${name}.log`), servicePort,
   })], name);
@@ -282,22 +303,25 @@ async function scan(host, ports) {
     'Watch the same sealed packet travel both routes.',
   ]);
 
-  await act('Sending it the long way, through the rendezvous...');
+  await act(tor ? 'Sending it the long way, through the onion service...'
+                : 'Sending it the long way, through the rendezvous...');
   const med = (a) => a.sort((x, y) => x - y)[Math.floor(a.length / 2)];
   const rel = [], dir = [];
   for (let i = 0; i < 5; i++) {
     const r = await ask(alice, { cmd: 'probe', target: dbR.id, route: 'relayed' }, (e) => e.t === 'result');
     if (r.ok) rel.push(r.rttMs);
   }
-  res(`Two hops — laptop to rendezvous, rendezvous to service. ${med(rel).toFixed(1)} ms.`);
-  res('The rendezvous moved the bytes but could not read them.');
+  res(tor ? `Out through a Tor circuit and back. ${med(rel).toFixed(0)} ms.`
+          : `Two hops — laptop to rendezvous, rendezvous to service. ${med(rel).toFixed(1)} ms.`);
+  res('The introducer moved the bytes but could not read them.');
 
   await act('Now the same packet, directly...');
   for (let i = 0; i < 5; i++) {
     const d = await ask(alice, { cmd: 'probe', target: dbR.id, route: 'direct' }, (e) => e.t === 'result');
     if (d.ok) dir.push(d.rttMs);
   }
-  res(`One hop. ${med(dir).toFixed(1)} ms. The rendezvous is no longer in the path.`);
+  res(`One hop. ${med(dir).toFixed(1)} ms. The introducer is no longer in the path.`);
+  if (tor) res(`That is the whole point: ${Math.round(med(rel) / med(dir))}x faster once they have met.`);
   await idea('the introduction is brief and the middleman leaves. Traffic runs directly between the two machines, so there is no third party in the middle of the conversation and nothing to slow it down or subpoena.');
 
   // ============================================================ STEP 3
@@ -457,6 +481,7 @@ async function scan(host, ports) {
   console.log('');
   rule('#');
   console.log('');
+  if (tor) tor.stop();
   kids.forEach((k) => k.kill());
   process.exit(0);
 })().catch((e) => {

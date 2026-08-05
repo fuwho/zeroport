@@ -15,6 +15,7 @@ node run-demo.js --slow
 | `node run-demo.js` | straight through, ~11 s | verifying it still passes; a fast backup recording |
 | `node run-demo.js --slow` | **presentation pace** — stops before each step and waits for a key | presenting on stage |
 | `node run-demo.js --slow --no-pause` | slow pacing but never waits for a key, ~32 s | recording an unattended backup video |
+| `node run-demo.js --tor` | publishes the rendezvous as a real onion service, so the introduction crosses the Tor network. Adds ~1-2 min for Tor to bootstrap | the strongest version of step 2 |
 
 At a pause, **ENTER** advances and **q** (or Ctrl-C) stops cleanly and kills the child processes.
 
@@ -26,6 +27,11 @@ itself, so your job is the context a judge needs — then press ENTER and let th
 
 It binds to this machine's network interface by default, so the scan targets a real network
 address. `--local` forces loopback; `--host <ip>` binds somewhere specific.
+
+With `--tor`, step 2 sends the same sealed packet out through a real Tor circuit and then
+directly, and reports both. A measured run gave **1522 ms via the onion service against
+2.0 ms direct** — the introduction is genuinely expensive, and the conversation genuinely
+is not.
 
 `node test-tty.js` is a harness that simulates a terminal and asserts the gate really
 blocks and really advances (6 prompts, 6 teaching lines).

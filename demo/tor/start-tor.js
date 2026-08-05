@@ -23,14 +23,14 @@ const CONTROL_FREE = true;
 
 const fwd = (p) => p.replace(/\\/g, '/');
 
-function writeTorrc(targetPort) {
+function writeTorrc(targetPort, targetHost) {
   fs.mkdirSync(DATA, { recursive: true });
   fs.mkdirSync(HS, { recursive: true });
   const rc = [
     `SocksPort ${SOCKS_PORT}`,
     `DataDirectory ${fwd(DATA)}`,
     `HiddenServiceDir ${fwd(HS)}`,
-    `HiddenServicePort 80 127.0.0.1:${targetPort}`,
+    `HiddenServicePort 80 ${targetHost || '127.0.0.1'}:${targetPort}`,
     'Log notice stdout',
     'ClientOnly 0',
   ].join('\n') + '\n';
@@ -39,12 +39,12 @@ function writeTorrc(targetPort) {
 }
 
 // Resolve when Tor has bootstrapped AND published the onion hostname.
-function start(targetPort, { onLog, timeoutMs = 180000 } = {}) {
+function start(targetPort, { onLog, timeoutMs = 180000, host } = {}) {
   if (!fs.existsSync(TOR_EXE)) {
     return Promise.reject(new Error(
       `tor.exe not found at:\n  ${TOR_EXE}\nSet TOR_EXE to its full path.`));
   }
-  writeTorrc(targetPort);
+  writeTorrc(targetPort, host);
 
   return new Promise((resolve, reject) => {
     const proc = spawn(TOR_EXE, ['-f', TORRC], { stdio: ['ignore', 'pipe', 'pipe'] });
