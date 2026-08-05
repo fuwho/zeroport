@@ -61,6 +61,7 @@ Presentation material lives in [`docs/`](docs/):
 | [`poster.pdf`](docs/poster.pdf) | A4 poster |
 | [`architecture.pdf`](docs/architecture.pdf) | The four planes and the connection upgrade |
 | [`threat-model.pdf`](docs/threat-model.pdf) | How four architectures answer the same ten attacks |
+| [`presentation-script.md`](docs/presentation-script.md) | The full talk track — idea to demo, with timings and Q&A |
 
 ## Run it
 
