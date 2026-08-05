@@ -51,6 +51,17 @@ No third-party dependencies are installed for any of it. Every primitive is eith
 audited implementation, or written against a published specification and checked against that
 specification's own test vectors.
 
+## Documents
+
+Presentation material lives in [`docs/`](docs/):
+
+| File | What it is |
+|---|---|
+| [`executive-summary.pdf`](docs/executive-summary.pdf) | One page for judges — the problem, the innovation, what actually runs |
+| [`poster.pdf`](docs/poster.pdf) | A4 poster |
+| [`architecture.pdf`](docs/architecture.pdf) | The four planes and the connection upgrade |
+| [`threat-model.pdf`](docs/threat-model.pdf) | How four architectures answer the same ten attacks |
+
 ## Run it
 
 ```bash
