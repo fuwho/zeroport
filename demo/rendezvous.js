@@ -67,6 +67,6 @@ const server = http.createServer(async (req, res) => {
   send(404, { error: 'not found' });
 });
 
-server.listen(PORT, '127.0.0.1', () => {
+server.listen(PORT, process.argv[3] || '127.0.0.1', () => {
   console.log(`#READY ${JSON.stringify({ plane: 'rendezvous', port: PORT })}`);
 });

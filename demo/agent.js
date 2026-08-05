@@ -217,7 +217,7 @@ async function send(targetId, route, port, payload) {
 }
 
 // ---------------- control ----------------
-sock.bind(0, '127.0.0.1', async () => {
+sock.bind(0, cfg.host || '127.0.0.1', async () => {
   const a = sock.address();
   await fetch(cfg.rendezvous + '/announce', {
     method: 'POST', body: JSON.stringify({ id: ME, host: a.address, port: a.port }),

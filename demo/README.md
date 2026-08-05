@@ -1,4 +1,4 @@
-# ZeroPort — Live Proof Run
+# ZeroPort — guided walkthrough
 
 A real, working implementation of the ZeroPort protocol. Not an animation.
 
