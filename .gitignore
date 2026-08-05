@@ -27,3 +27,7 @@ demo/audit-*.log
 demo/audit-*.log.ots
 demo/audit-*.log.anchor.json
 demo/dashboard/boot.log
+
+# Local working backups - not part of the deliverable
+demo-backup-v1/
+*.bak

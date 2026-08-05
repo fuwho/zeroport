@@ -1,0 +1,143 @@
+
+##############################################################################
+  ZEROPORT - LIVE PROOF RUN
+  Identity : real BIP-340 Schnorr / secp256k1  (validated against the
+             official spec test vectors - the exact scheme Nostr uses)
+  Tunnel   : real Noise_IKpsk2_25519_ChaChaPoly_BLAKE2s
+             (WireGuard's own handshake - forward secrecy + replay window)
+  Transport: real UDP sockets, separate OS processes, hash-chained audit
+##############################################################################
+
+  Bringing the network up...
+      control plane   (Plane 1, REAL Nostr relay, NIP-01 over WebSocket) : ws://127.0.0.1:8801
+      FROST 2-of-3 group key: 0b4c63c9e83aca0b9eb4f2af3c7dafc3...
+      rendezvous      (Plane 2, stands in for a Tor onion service)        : 127.0.0.1:8802
+      agent finance-db   id=zp1ac22d9c144  udp=50896  tcp listeners=0
+      agent alice-laptop id=zp13891bb355d  udp=50897  tcp listeners=0
+      agent rogue-node   id=zp1056d049364  (deliberately NOT enrolled)
+      roster v1 published as a signed Nostr event - relay accepted: true
+
+==============================================================================
+  PROOF 1  NOTHING TO SCAN - YET THE CONNECTION WORKS
+==============================================================================
+  What this proves: the protected service exposes no listening TCP port, so there is no door to knock on.
+
+  > Running a real TCP connect scan against the service node...
+      scanned 37 TCP ports on 127.0.0.1
+      open TCP ports found: 445, 8801, 8802
+      finance-db service port 5432 : CLOSED - nothing is listening
+      finance-db agent UDP 50896 : no TCP listener
+      (ports 445, 8801, 8802 are the relay/rendezvous infrastructure, not the protected node)
+  > Sending an unauthenticated UDP packet straight at the agent...
+      reply to unauthenticated packet: NONE - silently dropped
+  > Now connecting as the enrolled, policy-authorized peer...
+      handshake: ESTABLISHED
+      encrypted round trip returned: "ACK:SELECT 1"
+
+  VERDICT: A scan finds no way in, an unauthenticated packet is dropped, and yet an authorized peer connects and exchanges encrypted data.
+
+==============================================================================
+  PROOF 2  THE PATH UPGRADE - RENDEZVOUS FIRST, THEN DIRECT
+==============================================================================
+  What this proves: the rendezvous is used only to introduce the peers; the data then flows directly, with fewer hops.
+
+  > Sending the SAME sealed packet over each route, five times each...
+      via rendezvous (2 hops): median 20.860 ms
+      direct tunnel  (1 hop) : median 1.906 ms
+      the rendezvous is now out of the path entirely
+
+      NOTE - honest scale: every hop here is on loopback, so these millisecond
+      figures reflect process and HTTP framing overhead, not real network
+      distance. Over the internet the rendezvous hop would be a Tor circuit
+      (~300-400 ms) and the direct tunnel a single WAN hop (~5-15 ms), so the
+      real-world gap is far wider. What is proven here is the architecture:
+      the same sealed packet reaches the peer over two routes, and the fast
+      one carries no third party at all.
+
+  VERDICT: Direct is measurably faster (10.9x here) and needs no third party.
+
+==============================================================================
+  PROOF 3  ONE ADMINISTRATOR CANNOT ENROL A ROGUE NODE
+==============================================================================
+  What this proves: changing the roster needs a real 2-of-3 cryptographic quorum, not a trusted process.
+
+  > A single officer signs a roster that adds the rogue node...
+      relay responded: REJECTED - "invalid: signature verification failed"
+      the signature a lone officer produces is not merely refused by policy -
+      it is not a valid signature for the group key at all, so it cannot exist.
+  > A second officer co-signs the same roster...
+      relay responded: ACCEPTED - two shares combined into ONE valid signature
+  > Rolling back to the safe roster (2-of-3)...
+
+  VERDICT: A lone administrator is refused by cryptography. Two officers together succeed. No single person can betray the network.
+
+==============================================================================
+  PROOF 4  ACCESS EXPIRES BY ITSELF
+==============================================================================
+  What this proves: authorization is a short lease; if it is not renewed the node loses access with nobody pressing revoke.
+
+  > Issuing alice a 3-second lease...
+      connection while the lease is valid: ALLOWED
+  > Waiting 4 seconds. Nobody touches the console, nothing is revoked...
+      connection after the lease elapsed: DENIED (attacker sees: "no response (dropped)")
+      finance-db's own audit log records why: "lease expired"
+
+  VERDICT: Access ended on its own. A lost or offline device stops being trusted without any human action - fail-closed.
+
+==============================================================================
+  PROOF 5  UNENROLLED IS REFUSED, AND REVOCATION IS IMMEDIATE
+==============================================================================
+  What this proves: the agent is default-deny: absence from the signed roster, or presence on the revoked list, both stop traffic.
+
+  > Restoring alice to a normal lease and having the rogue node attempt access...
+      rogue-node -> finance-db:5432 : DENIED (attacker sees: "no response (dropped)")
+      defender's log: "peer static key not on the signed roster"
+  > Checking alice can still reach the database, then testing a port she is NOT allowed...
+      alice -> finance-db:5432 (permitted by policy) : ALLOWED
+      alice -> finance-db:22   (no policy rule)      : DENIED (attacker sees: "no response (dropped)")
+      defender's log: "no policy permits zp13891bb355d -> zp1ac22d9c144:22"
+  > Revoking alice - emergency revocation needs only ONE officer signature...
+      relay accepted the revocation event: true
+      signed by ONE officer using their own individual key - no quorum needed to remove access
+      alice -> finance-db:5432 after revocation : DENIED (attacker sees: "no response (dropped)")
+      defender's log: "peer revoked"
+
+  VERDICT: Unenrolled refused, wrong port refused, revoked node dead. Microsegmentation and revocation both hold.
+
+==============================================================================
+  PROOF 6  THE AUDIT LOG CANNOT BE QUIETLY REWRITTEN
+==============================================================================
+  What this proves: entries are hash-chained and the head is publicly anchored, so an edit AND a file swap are both detectable.
+
+      the service node published its chain head as a public anchor:
+        448748fdef1ff67e466e02b201d67450f8fe516af6436acac4c06418e63a83fd
+  > Verifying the untouched log...
+      result: INTACT - 26 entries, head matches anchor
+  > Submitting the chain head to independent public timestamp servers...
+      ANCHORED by a third party: https://a.pool.opentimestamps.org
+      proof received: 172 bytes, saved as audit-finance-db.log.ots
+      this digest is now committed into the Bitcoin blockchain by OpenTimestamps;
+      anyone can check it later with:  ots verify audit-finance-db.log.ots
+  > An attacker edits one line to erase a denial...
+      verifier: CAUGHT IT - entry altered: hash mismatch at line 2
+  > The attacker gives up and replaces the whole file with a clean one...
+      internally consistent? yes - the chain itself is valid
+      verifier vs public anchor: CAUGHT IT - head does not match public anchor (file replaced or truncated)
+
+  VERDICT: One edited line breaks the chain. A whole replacement file fails against the published anchor. Tampering is always evident.
+
+==============================================================================
+  WHAT THE SECURITY TEAM ACTUALLY SEES
+==============================================================================
+      #16  ALLOW  zp13891bb355d -> zp1ac22d9c144:5432  8B  via direct
+      #18  DENY   zp13891bb355d  reason: lease expired
+      #19  DENY   unknown  reason: peer static key not on the signed roster
+      #21  ALLOW  zp13891bb355d -> zp1ac22d9c144:5432  8B  via direct
+      #23  DENY   zp13891bb355d  reason: no policy permits zp13891bb355d -> zp1ac22d9c144:22
+      #26  DENY   zp13891bb355d  reason: peer revoked
+
+      Every line is bound to a cryptographic identity and to the policy that allowed it.
+##############################################################################
+  RUN COMPLETE
+##############################################################################
+

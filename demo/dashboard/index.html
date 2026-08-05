@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ZeroPort — Operations Console</title>
+<style>
+  :root{
+    --bg:#05231A; --bg2:#031812; --panel:#0A3226; --panel2:#0E4132;
+    --line:#16453A; --green:#16C77F; --cyan:#2CD4E0;
+    --ink:#E8F5EF; --body:#B8D2C7; --mut:#7EA292; --red:#FF6B6B; --amber:#F0B429;
+    --mono:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--body); min-height:100vh;
+    font:14px/1.55 -apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,sans-serif;
+    background-image:
+      linear-gradient(rgba(22,199,127,.028) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(22,199,127,.028) 1px,transparent 1px);
+    background-size:26px 26px;
+  }
+  .wrap{max-width:1380px;margin:0 auto;padding:0 22px 48px}
+  header{background:var(--bg2);border-bottom:2px solid var(--green);padding:16px 22px;margin-bottom:22px}
+  .brandwrap{max-width:1380px;margin:0 auto;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:11px}
+  .word{font-size:23px;font-weight:700;letter-spacing:.055em;color:var(--ink)}
+  .sub{font:600 9.5px/1 var(--mono);letter-spacing:.24em;color:var(--cyan);margin-top:5px}
+  .spacer{flex:1}
+  .live{display:flex;align-items:center;gap:8px;font:600 11px/1 var(--mono);letter-spacing:.1em}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+  .dot.off{background:var(--red);animation:none}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(22,199,127,.55)}70%{box-shadow:0 0 0 9px rgba(22,199,127,0)}100%{box-shadow:0 0 0 0 rgba(22,199,127,0)}}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:22px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:13px 15px}
+  .stat .k{font:600 9.5px/1 var(--mono);letter-spacing:.16em;color:var(--mut);margin-bottom:8px}
+  .stat .v{font:700 17px/1.15 var(--mono);color:var(--green);word-break:break-all}
+  .stat .v.cyan{color:var(--cyan)}
+  .stat .n{font-size:11px;color:var(--mut);margin-top:6px;line-height:1.4}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+  @media(max-width:980px){.grid{grid-template-columns:1fr}}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:18px}
+  .panel h2{font:700 11px/1 var(--mono);letter-spacing:.17em;color:var(--ink);padding:14px 16px;
+    border-bottom:1px solid var(--line);background:var(--panel2);display:flex;align-items:center;gap:9px}
+  .panel h2 .num{color:var(--cyan)}
+  .panel .body{padding:16px}
+  .hint{font-size:11.5px;color:var(--mut);margin-bottom:14px;line-height:1.5}
+  .topo{display:flex;align-items:center;gap:12px}
+  .node{flex:1;background:var(--bg2);border:1px solid var(--green);border-radius:8px;padding:13px;text-align:center;transition:.25s}
+  .node.dead{border-color:var(--red);opacity:.55}
+  .node .nm{font-weight:600;color:var(--ink);font-size:13px}
+  .node .id{font:10.5px/1.5 var(--mono);color:var(--mut);margin-top:3px;word-break:break-all}
+  .node .tag{font:600 9px/1 var(--mono);letter-spacing:.13em;color:var(--cyan);margin-top:7px}
+  .link{flex:0 0 96px;text-align:center}
+  .link .bar{height:3px;background:var(--green);border-radius:2px;position:relative;overflow:hidden}
+  .link .bar::after{content:'';position:absolute;top:0;left:-40%;width:40%;height:100%;background:var(--cyan);animation:flow 1.9s linear infinite}
+  @keyframes flow{to{left:110%}}
+  .link .lbl{font:600 9px/1 var(--mono);letter-spacing:.1em;color:var(--green);margin-top:7px}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{font:600 9.5px/1 var(--mono);letter-spacing:.14em;color:var(--mut);text-align:left;padding:0 8px 9px;border-bottom:1px solid var(--line)}
+  td{padding:10px 8px;border-bottom:1px solid rgba(22,69,58,.55)}
+  tr:last-child td{border-bottom:none}
+  .mono{font-family:var(--mono);font-size:11px;color:var(--mut)}
+  .pill{display:inline-block;font:600 9.5px/1 var(--mono);letter-spacing:.09em;padding:4px 8px;border-radius:4px}
+  .pill.ok{background:rgba(22,199,127,.15);color:var(--green);border:1px solid rgba(22,199,127,.35)}
+  .pill.bad{background:rgba(255,107,107,.13);color:var(--red);border:1px solid rgba(255,107,107,.32)}
+  .pill.warn{background:rgba(240,180,41,.13);color:var(--amber);border:1px solid rgba(240,180,41,.32)}
+  .group{margin-bottom:17px}
+  .group .gl{font:600 9.5px/1 var(--mono);letter-spacing:.15em;color:var(--cyan);margin-bottom:9px}
+  .btns{display:flex;flex-wrap:wrap;gap:8px}
+  button{font:600 12px/1 inherit;color:var(--ink);background:var(--panel2);border:1px solid var(--line);
+    border-radius:6px;padding:9px 13px;cursor:pointer;transition:.15s}
+  button:hover{border-color:var(--green);color:var(--green);transform:translateY(-1px)}
+  button.danger:hover{border-color:var(--red);color:var(--red)}
+  .notes{margin-top:14px;border-top:1px solid var(--line);padding-top:13px;max-height:190px;overflow-y:auto}
+  .note{font:12px/1.5 var(--mono);padding:5px 0 5px 10px;color:var(--body);border-left:2px solid var(--line);margin-bottom:5px}
+  .note.ok{border-left-color:var(--green);color:var(--green)}
+  .note.deny{border-left-color:var(--red);color:var(--red)}
+  .note .t{color:var(--mut);margin-right:8px}
+  .chain{margin-left:auto}
+  .stream{max-height:330px;overflow-y:auto;font-family:var(--mono);font-size:11.5px}
+  .row{display:flex;gap:10px;padding:7px 9px;border-radius:5px;align-items:baseline}
+  .row:nth-child(odd){background:rgba(255,255,255,.018)}
+  .row .seq{color:var(--mut);min-width:34px}
+  .row .vb{min-width:56px;font-weight:600}
+  .row.allow .vb{color:var(--green)} .row.deny .vb{color:var(--red)} .row.info .vb{color:var(--cyan)}
+  .row .msg{color:var(--body);word-break:break-word}
+  .row .msg b{color:var(--ink);font-weight:600}
+  .empty{color:var(--mut);font-size:12px;padding:18px 0;text-align:center}
+  footer{margin-top:26px;padding-top:16px;border-top:1px solid var(--line);font-size:11px;color:var(--mut);
+    display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
+  ::-webkit-scrollbar{width:9px}
+  ::-webkit-scrollbar-track{background:var(--bg2)}
+  ::-webkit-scrollbar-thumb{background:var(--line);border-radius:5px}
+</style>
+</head>
+<body>
+
+<header><div class="brandwrap">
+  <div class="brand">
+    <svg width="34" height="34" viewBox="0 0 40 40" aria-hidden="true">
+      <path d="M20 4 L33.86 12 L33.86 28 L20 36 L6.14 28 L6.14 12 Z" fill="none" stroke="#16C77F" stroke-width="3.4"/>
+      <rect x="11.5" y="17.6" width="17" height="4.8" rx="2.4" fill="#2CD4E0"/>
+    </svg>
+    <div>
+      <div class="word">ZEROPORT</div>
+      <div class="sub">OPERATIONS CONSOLE</div>
+    </div>
+  </div>
+  <div class="spacer"></div>
+  <div class="live"><span class="dot" id="dot"></span><span id="connState">CONNECTING</span></div>
+</div></header>
+
+<div class="wrap">
+  <div class="stats">
+    <div class="stat"><div class="k">SIGNING AUTHORITY</div><div class="v cyan" id="sGroup">—</div>
+      <div class="n">FROST 2-of-3 group key. No officer holds it alone.</div></div>
+    <div class="stat"><div class="k">ENROLLED PEERS</div><div class="v" id="sPeers">—</div>
+      <div class="n">Present on the threshold-signed roster.</div></div>
+    <div class="stat"><div class="k">LISTENING PORTS</div><div class="v">0</div>
+      <div class="n">Agents bind one UDP socket and no TCP listener.</div></div>
+    <div class="stat"><div class="k">AUDIT CHAIN</div><div class="v" id="sChain">—</div>
+      <div class="n" id="sChainNote">SHA-256 hash chain, recomputed on demand.</div></div>
+  </div>
+
+  <div class="grid">
+    <div>
+      <div class="panel">
+        <h2><span class="num">01</span> LIVE TOPOLOGY</h2>
+        <div class="body">
+          <p class="hint">Neither machine exposes a listening port. They were introduced through the rendezvous plane and now hold a direct encrypted tunnel; the middleman has left the path.</p>
+          <div class="topo">
+            <div class="node" id="nAlice"><div class="nm">alice-laptop</div>
+              <div class="id" id="idAlice">—</div><div class="tag">NO PUBLIC IP</div></div>
+            <div class="link"><div class="bar"></div><div class="lbl">DIRECT · NOISE IK</div></div>
+            <div class="node" id="nDb"><div class="nm">finance-db</div>
+              <div class="id" id="idDb">—</div><div class="tag">NO OPEN PORT</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <h2><span class="num">02</span> SIGNED ROSTER</h2>
+        <div class="body">
+          <p class="hint">Membership is a Nostr event signed by the group key. A threshold signature can only be produced by two officers together, so verifying it <em>is</em> the quorum check — nothing counts signatures.</p>
+          <table><thead><tr><th>PEER</th><th>IDENTITY</th><th>STATE</th></tr></thead>
+          <tbody id="rosterBody"><tr><td colspan="3" class="empty">waiting for the roster…</td></tr></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel">
+        <h2><span class="num">03</span> OPERATIONS</h2>
+        <div class="body">
+          <p class="hint">Every button issues a real command to a real agent process. Nothing here is scripted.</p>
+          <div class="group"><div class="gl">ACCESS</div><div class="btns">
+            <button data-a="connect">Connect alice → finance-db:5432</button>
+            <button data-a="wrongPort">Try a port with no policy</button>
+            <button data-a="rogue">Unenrolled node attempts access</button>
+          </div></div>
+          <div class="group"><div class="gl">ADMINISTRATION</div><div class="btns">
+            <button data-a="enrollOne">Enrol with ONE officer</button>
+            <button data-a="enrollTwo">Enrol with TWO officers</button>
+            <button data-a="lease">Issue a 6-second lease</button>
+            <button data-a="restore">Restore baseline</button>
+          </div></div>
+          <div class="group"><div class="gl">CONTAINMENT</div><div class="btns">
+            <button class="danger" data-a="revoke" data-peer="alice">Revoke alice-laptop</button>
+            <button data-a="verify">Verify audit chain</button>
+            <button class="danger" data-a="tamper">Tamper with the log</button>
+          </div></div>
+          <div class="notes" id="notes"></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h2><span class="num">04</span> ATTRIBUTED FLOW LOG
+          <span class="chain" id="chainBadge"><span class="pill ok">CHAIN INTACT</span></span></h2>
+        <div class="body">
+          <p class="hint">Not IP-to-IP guesswork. Every line names the cryptographic identity and the policy that allowed it — or the exact reason it was refused.</p>
+          <div class="stream" id="stream"><div class="empty">no entries yet…</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <span>Live data from a running ZeroPort network — real BIP-340 identities, real FROST quorum, real Noise tunnels.</span>
+    <span>Independent hackathon proposal. Not an official Ministry of Interior publication.</span>
+  </footer>
+</div>
+
+<script>
+const $=(s)=>document.querySelector(s);
+let sock, state={};
+function connect(){
+  sock=new WebSocket('ws://'+location.host);
+  sock.onopen=()=>{$('#dot').classList.remove('off');$('#connState').textContent='LIVE';};
+  sock.onclose=()=>{$('#dot').classList.add('off');$('#connState').textContent='DISCONNECTED';setTimeout(connect,1500);};
+  sock.onmessage=(e)=>handle(JSON.parse(e.data));
+}
+connect();
+document.querySelectorAll('button[data-a]').forEach(b=>{
+  b.onclick=()=>{
+    const peer=b.dataset.peer==='alice'?(state.roster&&state.roster.peers||[]).find(p=>p.name==='alice-laptop'):null;
+    sock.send(JSON.stringify({action:b.dataset.a,peer:peer?peer.id:undefined}));
+  };
+});
+const esc=(s)=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const time=()=>new Date().toLocaleTimeString([],{hour12:false});
+function handle(m){
+  if(m.type==='state'){
+    state=m;
+    $('#sGroup').textContent=m.groupPub?m.groupPub.slice(0,20)+'…':'—';
+    const peers=(m.roster&&m.roster.peers)||[];
+    $('#sPeers').textContent=peers.filter(p=>!p.revoked).length+' / '+peers.length;
+    renderRoster(peers);
+    const a=peers.find(p=>p.name==='alice-laptop'), d=peers.find(p=>p.name==='finance-db');
+    if(a){$('#idAlice').textContent=a.id;$('#nAlice').classList.toggle('dead',!!a.revoked);}
+    if(d){$('#idDb').textContent=d.id;}
+  }
+  else if(m.type==='audit'){renderStream(m.entries||[]);renderChain(m.chain);}
+  else if(m.type==='note'){addNote(m.message,m.level);}
+  else if(m.type==='boot'){addNote(m.message,'info');}
+}
+function renderRoster(peers){
+  const tb=$('#rosterBody');
+  if(!peers.length){tb.innerHTML='<tr><td colspan="3" class="empty">waiting for the roster…</td></tr>';return;}
+  tb.innerHTML=peers.map(p=>{
+    let pill='<span class="pill ok">ACTIVE</span>';
+    if(p.revoked)pill='<span class="pill bad">REVOKED</span>';
+    else if(p.leaseExpires)pill='<span class="pill warn">LEASED</span>';
+    return '<tr><td><b style="color:var(--ink)">'+esc(p.name)+'</b></td><td class="mono">'+esc(p.id)+'</td><td>'+pill+'</td></tr>';
+  }).join('');
+}
+function renderChain(c){
+  if(!c)return;
+  const el=$('#chainBadge');
+  if(c.ok){
+    el.innerHTML='<span class="pill ok">CHAIN INTACT</span>';
+    $('#sChain').textContent='INTACT';$('#sChain').style.color='var(--green)';
+    $('#sChainNote').textContent=(c.entries||0)+' entries recomputed and verified.';
+  }else{
+    el.innerHTML='<span class="pill bad">CHAIN BROKEN</span>';
+    $('#sChain').textContent='BROKEN';$('#sChain').style.color='var(--red)';
+    $('#sChainNote').textContent=c.reason||'verification failed';
+  }
+}
+function renderStream(entries){
+  const s=$('#stream');
+  if(!entries.length){s.innerHTML='<div class="empty">no entries yet…</div>';return;}
+  s.innerHTML=entries.map(e=>{
+    const ev=e.event||{};let cls='info',vb='INFO',msg='';
+    if(ev.type==='flow'){cls='allow';vb='ALLOW';msg='<b>'+esc(ev.peer||'?')+'</b> → '+esc(ev.service||'')+' · '+(ev.bytes||0)+'B · via '+esc(ev.path||'direct');}
+    else if(ev.type==='deny'){cls='deny';vb='DENY';msg='<b>'+esc(ev.peer||'unknown')+'</b> — '+esc(ev.reason||'');}
+    else if(ev.type==='handshake'){vb='TUNNEL';msg='<b>'+esc(ev.peer||'')+'</b> — '+esc(ev.suite||'');}
+    else{msg=esc(ev.type||'');}
+    return '<div class="row '+cls+'"><span class="seq">#'+e.seq+'</span><span class="vb">'+vb+'</span><span class="msg">'+msg+'</span></div>';
+  }).reverse().join('');
+}
+function addNote(msg,level){
+  const n=$('#notes'),d=document.createElement('div');
+  d.className='note '+(level||'info');
+  d.innerHTML='<span class="t">'+time()+'</span>'+esc(msg);
+  n.prepend(d);
+  while(n.children.length>40)n.lastChild.remove();
+}
+</script>
+</body>
+</html>
