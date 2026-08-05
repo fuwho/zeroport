@@ -13,7 +13,7 @@ node run-demo.js --slow
 | Command | Behaviour | Use it for |
 |---|---|---|
 | `node run-demo.js` | straight through, ~11 s | verifying it still passes; a fast backup recording |
-| `node run-demo.js --slow` | **presentation pace** — stops before each proof and waits for a key, with beats before each verdict | presenting on stage |
+| `node run-demo.js --slow` | **presentation pace** — stops before each step and waits for a key | presenting on stage |
 | `node run-demo.js --slow --no-pause` | slow pacing but never waits for a key, ~32 s | recording an unattended backup video |
 
 At a pause, **ENTER** advances and **q** (or Ctrl-C) stops cleanly and kills the child processes.
@@ -21,11 +21,14 @@ At a pause, **ENTER** advances and **q** (or Ctrl-C) stops cleanly and kills the
 > If stdin is not a terminal — piped, redirected, or CI — the keypress gate disables itself
 > automatically, so the run can never hang. `run-demo.js --slow > out.txt` is safe.
 
-**On stage:** the run prints `ready for PROOF n of 6` and waits. Narrate what is about to
-happen, press ENTER, let the real output land, then read the VERDICT line aloud.
+**On stage:** the run prints `ready for STEP n of 6` and waits. It explains each step
+itself, so your job is the context a judge needs — then press ENTER and let the output land.
+
+It binds to this machine's network interface by default, so the scan targets a real network
+address. `--local` forces loopback; `--host <ip>` binds somewhere specific.
 
 `node test-tty.js` is a harness that simulates a terminal and asserts the gate really
-blocks and really advances (6 prompts, 6 verdicts, 0 inconclusive).
+blocks and really advances (6 prompts, 6 teaching lines).
 
 ---
 
@@ -72,14 +75,22 @@ Everything else is now the genuine article:
   *(The page hosted at zeroport.vercel.app is a static mockup and proves nothing — do not
   confuse the two.)*
 
-## The six proofs
+## The six steps
 
-1. **Nothing to scan, yet it connects.** A real TCP scan finds no listener on the service; an unauthenticated UDP packet gets no reply; an enrolled peer completes a handshake and exchanges encrypted data.
-2. **Path upgrade.** The identical sealed packet is sent over the rendezvous route and the direct route, five times each; both medians are reported.
-3. **A lone administrator is refused.** A roster signed by one FROST share is rejected as *"invalid: signature verification failed"* — not by a policy check, but because it is not a valid signature for the group key at all. Two officers together produce one signature, and it is accepted.
-4. **Access expires by itself.** A 3-second lease is issued; a connection succeeds, then four seconds pass with nobody touching anything, and the next connection is refused.
-5. **Default-deny and revocation.** Unenrolled node refused; a permitted port allowed; a non-permitted port refused; then a **1-of-N emergency revocation** kills a live peer.
-6. **The audit log cannot be rewritten.** One edited line breaks the chain; a wholesale replacement file is internally valid but fails against the published anchor.
+1. **The door that isn't there.** A real TCP scan of the service finds nothing; an
+   unauthenticated packet is dropped without a reply; then an enrolled peer connects and
+   exchanges encrypted data.
+2. **How two machines meet when neither can be called.** The same sealed packet travels via
+   the rendezvous and then directly, so the introduction and the conversation are visibly
+   separate things.
+3. **Who is allowed to change the guest list.** One officer's roster is refused — the thing
+   they can produce is not a valid signature for the group key. Two officers succeed.
+4. **What happens to a laptop that is stolen.** A short lease is issued, then nobody renews
+   it and nobody revokes anything. Access ends on its own.
+5. **The two ways in that do not work.** An uninvited machine, and an invited machine
+   reaching for a port it was never granted. Then one officer removes a live peer.
+6. **The record of what happened.** An edited line breaks the chain; a wholly replaced file
+   is internally consistent but fails against the head published outside.
 
 ## A note on the deny messages
 

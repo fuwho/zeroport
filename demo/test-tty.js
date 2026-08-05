@@ -26,14 +26,14 @@ p.stdout.on('data', (d) => {
 
 p.on('exit', (code) => {
   fs.unlinkSync(shim);
-  const verdicts = (buf.match(/VERDICT:/g) || []).length;
+  const ideas = (buf.match(/The idea:/g) || []).length;
   const inconclusive = (buf.match(/INCONCLUSIVE/g) || []).length;
   console.log('\n================ HARNESS RESULT ================');
   console.log('exit code        :', code);
   console.log('keypress prompts :', prompts, '(expected 6)');
-  console.log('verdicts         :', verdicts, '(expected 6)');
+  console.log('teaching lines   :', ideas, '(expected 6)');
   console.log('inconclusive     :', inconclusive, '(expected 0)');
-  const ok = code === 0 && prompts === 6 && verdicts === 6 && inconclusive === 0;
+  const ok = code === 0 && prompts === 6 && ideas === 6 && inconclusive === 0;
   console.log(ok ? 'PASS - the gate blocks and advances correctly' : 'FAIL');
   process.exit(ok ? 0 : 1);
 });
