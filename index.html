@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ZeroPort — the safest port is the one you never opened</title>
 <meta name="description" content="Every VPN gateway and firewall has to listen on a public address. ZeroPort doesn't guard that door — it removes it. An interactive explanation of identity-native zero-trust access.">
-<meta name="theme-color" content="#F7F9FC">
+<meta name="theme-color" content="#E9EEF6">
 <meta property="og:title" content="ZeroPort — the safest port is the one you never opened">
 <meta property="og:description" content="Nothing listens. There is nothing to scan. And the people who belong still connect in seconds, at full speed.">
 <meta property="og:type" content="website">
@@ -18,9 +18,9 @@
    the actions we want taken, and the numbers we are proud of.
    ═══════════════════════════════════════════════════════════════════ */
 :root{
-  --bg:#F7F9FC;      /* page canvas  */
-  --surface:#FFFFFF; /* cards, panels -- the only pure white on the page */
-  --band:#EDF2F8;    /* full-width alternating sections */
+  --bg:#E9EEF6;      /* page canvas -- the console's slate, visible on sight */
+  --surface:#FFFFFF; /* cards and panels sit above everything */
+  --band:#F4F7FB;    /* alternating sections, LIGHTER than the canvas */
   --soft:#F8FAFC; --tint:#F1F5F9;
   --line:#E2E8F0; --line-2:#CBD5E1;
 
@@ -78,7 +78,7 @@ a{color:var(--blue-700)}
 .eyebrow{
   display:inline-flex;align-items:center;gap:9px;
   font:700 11.5px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
-  color:var(--blue);margin-bottom:18px;
+  color:var(--blue-700);margin-bottom:18px;
 }
 .eyebrow::before{content:'';width:22px;height:2px;border-radius:2px;background:var(--blue);opacity:.5}
 .kicker{font:700 12px/1 var(--sans);letter-spacing:.13em;text-transform:uppercase;color:var(--mut)}
@@ -111,7 +111,7 @@ code{
 /* ── Navigation ───────────────────────────────────────────────────── */
 nav{
   position:sticky;top:0;z-index:60;
-  background:rgba(247,249,252,.85);backdrop-filter:saturate(180%) blur(14px);
+  background:rgba(233,238,246,.88);backdrop-filter:saturate(180%) blur(14px);
   border-bottom:1px solid var(--line);
 }
 .navin{max-width:var(--max);margin:0 auto;padding:14px 28px;display:flex;align-items:center;gap:16px}
