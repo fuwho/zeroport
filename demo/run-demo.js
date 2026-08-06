@@ -168,7 +168,7 @@ async function publishRevocation(idx, peerIds) {
   const o = officers[idx];
   const ev = nostr.build({
     pubkey: o.pub, kind: nostr.ROSTER_KIND,
-    tags: [['d', 'zeroport-revocation']], content: { revoke: peerIds },
+    tags: [['d', 'zeroport-revocation']], content: { revoke: peerIds, rosterVersion: version },
   }, (id) => bip.sign(id, o.priv));
   return (await relayC()).publish(ev);
 }

@@ -31,3 +31,4 @@ demo/dashboard/boot.log
 # Local working backups - not part of the deliverable
 demo-backup-v1/
 *.bak
+demo/audit-*.log.orig

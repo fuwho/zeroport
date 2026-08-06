@@ -10,8 +10,12 @@
 //
 //   node dashboard/server.js      then open http://127.0.0.1:8080
 const http = require('http');
+const net = require('net');
+const dgram = require('dgram');
+const os = require('os');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 const { spawn } = require('child_process');
 const DIR = __dirname;
 const ROOT = path.join(DIR, '..');
@@ -22,11 +26,17 @@ const nostr = require(path.join(ROOT, 'lib', 'nostr'));
 const nclient = require(path.join(ROOT, 'lib', 'nclient'));
 const ws = require(path.join(ROOT, 'lib', 'ws'));
 
+function lanIP() {
+  for (const a of Object.values(os.networkInterfaces()))
+    for (const i of a || []) if (i.family === 'IPv4' && !i.internal) return i.address;
+  return '127.0.0.1';
+}
+const NET_HOST = process.argv.includes('--local') ? '127.0.0.1' : lanIP();
 const HTTP_PORT = 8080;
 const RELAY_PORT = 8811;
 const RDV_PORT = 8812;
-const RELAY_WS = `ws://127.0.0.1:${RELAY_PORT}`;
-const RDV = `http://127.0.0.1:${RDV_PORT}`;
+const RELAY_WS = `ws://${NET_HOST}:${RELAY_PORT}`;
+const RDV = `http://${NET_HOST}:${RDV_PORT}`;
 
 const kids = [];
 const clients = new Set();
@@ -41,6 +51,7 @@ let version = 0;
 let relayConn = null;
 let agents = {};
 let roster = null;
+let anchoredHead = null;        // the head we published to an outside witness
 const log = [];                    // recent audit entries, newest last
 
 function launch(file, args, name) {
@@ -97,7 +108,7 @@ async function publishRevocation(idx, peerIds) {
   const o = officers[idx];
   const ev = nostr.build({
     pubkey: o.pub, kind: nostr.ROSTER_KIND,
-    tags: [['d', 'zeroport-revocation']], content: { revoke: peerIds },
+    tags: [['d', 'zeroport-revocation']], content: { revoke: peerIds, rosterVersion: version },
   }, (id) => bip.sign(id, o.priv));
   const res = await (await relayC()).publish(ev);
   if (res.ok && roster) {
@@ -129,6 +140,7 @@ function pushState() {
   broadcast({
     type: 'state',
     groupPub: GROUP.groupPub,
+    netHost: NET_HOST,
     officers: officerPubs.map((p) => p.slice(0, 16)),
     threshold: 2,
     roster,
@@ -139,29 +151,29 @@ function pushState() {
 // ---------------------------------------------------------------- boot
 async function boot() {
   broadcast({ type: 'boot', message: 'starting control plane' });
-  const relay = launch('nostr-relay.js', [String(RELAY_PORT)], 'relay');
-  const rdv = launch('rendezvous.js', [String(RDV_PORT)], 'rendezvous');
+  const relay = launch('nostr-relay.js', [String(RELAY_PORT), NET_HOST], 'relay');
+  const rdv = launch('rendezvous.js', [String(RDV_PORT), NET_HOST], 'rendezvous');
   await relay.waitReady(); await rdv.waitReady();
 
   const mk = (name, servicePort) => launch('agent.js', [JSON.stringify({
-    name, relay: RELAY_WS, rendezvous: RDV, groupPub: GROUP.groupPub, officerPubs,
+    name, host: NET_HOST, relay: RELAY_WS, rendezvous: RDV, groupPub: GROUP.groupPub, officerPubs,
     log: path.join(ROOT, `audit-${name}.log`), servicePort,
   })], name);
 
   const db = mk('finance-db', 5432);
-  const alice = mk('alice-laptop', 0);
-  const rogue = mk('rogue-node', 0);
+  const alice = mk('officer-laptop', 0);
+  const rogue = mk('unknown-device', 0);
   const [dbR, aliceR, rogueR] = await Promise.all([db.waitReady(), alice.waitReady(), rogue.waitReady()]);
   agents = {
     'finance-db': { proc: db, ...dbR },
-    'alice-laptop': { proc: alice, ...aliceR },
-    'rogue-node': { proc: rogue, ...rogueR },
+    'officer-laptop': { proc: alice, ...aliceR },
+    'unknown-device': { proc: rogue, ...rogueR },
   };
 
   await publishRoster({
     peers: [
       { id: dbR.id, idPub: dbR.idPub, staticPub: dbR.staticPub, name: 'finance-db' },
-      { id: aliceR.id, idPub: aliceR.idPub, staticPub: aliceR.staticPub, name: 'alice-laptop' },
+      { id: aliceR.id, idPub: aliceR.idPub, staticPub: aliceR.staticPub, name: 'officer-laptop' },
     ],
     policy: [{ from: aliceR.id, to: dbR.id, port: 5432, allow: true }],
   }, 2);
@@ -173,48 +185,150 @@ async function boot() {
 }
 
 // ---------------------------------------------------------------- commands
+function logLines() {
+  try { return fs.readFileSync(DB_LOG, 'utf8').trim().split('\n').filter(Boolean); } catch { return []; }
+}
+// The reason the DEFENDER wrote down, not the excuse the caller was given.
+// Waits briefly for the entry to land so we never report a stale refusal.
+async function denyReasonSince(mark) {
+  for (let i = 0; i < 20; i++) {
+    const lines = logLines();
+    for (let j = lines.length - 1; j >= mark; j--) {
+      try { const e = JSON.parse(lines[j]); if (e.event.type === 'deny') return e.event.reason; } catch {}
+    }
+    await new Promise((r) => setTimeout(r, 50));
+  }
+  return '';
+}
+
 async function handle(cmd) {
-  const db = agents['finance-db'], alice = agents['alice-laptop'], rogue = agents['rogue-node'];
+  const db = agents['finance-db'], alice = agents['officer-laptop'], rogue = agents['unknown-device'];
   const note = (m, level = 'info') => broadcast({ type: 'note', level, message: m });
 
+  const done = (o) => broadcast({ type: 'result', action: cmd.action, quiet: cmd.quiet || undefined, ...o });
+
+  if (cmd.action === 'scan') {
+    const probe = (port) => new Promise((r) => {
+      const s = new net.Socket(); const fin = (v) => { s.destroy(); r(v); };
+      s.setTimeout(300);
+      s.once('connect', () => fin(true)); s.once('timeout', () => fin(false)); s.once('error', () => fin(false));
+      s.connect(port, NET_HOST);
+    });
+    const ports = [22, 80, 443, 445, 3306, 3389, 5432, 8080, 8443, agents['finance-db'].udpPort];
+    for (let p = 8790; p <= 8815; p++) ports.push(p);
+    const uniq = [...new Set(ports)];
+    const open = [];
+    for (const p of uniq) if (await probe(p)) open.push(p);
+    const infra = { [RELAY_PORT]: 'the directory', [RDV_PORT]: 'the rendezvous', 8080: 'this console' };
+    return done({
+      host: NET_HOST, scanned: uniq.length,
+      open: open.filter((p) => infra[p]).map((p) => `${p} (${infra[p]})`),
+      other: open.filter((p) => !infra[p] && p !== 5432 && p !== agents['finance-db'].udpPort),
+      servicePortOpen: open.includes(5432),
+      agentPortOpen: open.includes(agents['finance-db'].udpPort),
+      agentPort: agents['finance-db'].udpPort,
+    });
+  }
+
+  if (cmd.action === 'rawPacket') {
+    const sock = dgram.createSocket('udp4');
+    const replied = await new Promise((r) => {
+      const t = setTimeout(() => r(false), 900);
+      sock.on('message', () => { clearTimeout(t); r(true); });
+      sock.send(Buffer.from('GET / HTTP/1.1\r\n\r\n'), agents['finance-db'].udpPort, NET_HOST);
+    });
+    sock.close();
+    return done({ replied });
+  }
+
+  if (cmd.action === 'pathCompare') {
+    const db = agents['finance-db'], alice = agents['officer-laptop'] || agents['officer-laptop'];
+    const med = (a) => a.sort((x, y) => x - y)[Math.floor(a.length / 2)] || 0;
+    const rel = [], dir = [];
+    for (let i = 0; i < 4; i++) {
+      const r = await ask(alice.proc, { cmd: 'probe', target: db.id, route: 'relayed' }, (e) => e.t === 'result');
+      if (r.ok) rel.push(r.rttMs);
+      const d = await ask(alice.proc, { cmd: 'probe', target: db.id, route: 'direct' }, (e) => e.t === 'result');
+      if (d.ok) dir.push(d.rttMs);
+    }
+    return done({ relayed: med(rel), direct: med(dir), samples: rel.length });
+  }
+
+  if (cmd.action === 'anchor') {
+    const a = await ask(agents['finance-db'].proc, { cmd: 'anchor' }, (e) => e.t === 'anchor');
+    const ext = await require(path.join(ROOT, 'lib', 'anchor')).submit(Buffer.from(a.head, 'hex'));
+    anchoredHead = a.head;
+    return done({ head: a.head, ok: ext.ok, calendar: ext.ok ? ext.calendar : null });
+  }
+
+  // The harder forgery: don't edit a line, rebuild the whole file so it is
+  // internally perfect - then rehash it and compare against the head we
+  // published to a witness we do not control.
+  if (cmd.action === 'forge') {
+    if (!anchoredHead) return done({ ok: false, needAnchor: true });
+    const original = fs.readFileSync(DB_LOG, 'utf8');
+    if (!fs.existsSync(DB_LOG + '.orig')) fs.writeFileSync(DB_LOG + '.orig', original);
+    const all = original.trim().split('\n').filter(Boolean).map((l) => JSON.parse(l));
+    const kept = all.filter((e) => e.event.type !== 'deny');
+    // rebuild the chain from GENESIS so every link is genuinely correct
+    let prev = 'GENESIS', seq = 0, out = '';
+    for (const e of kept) {
+      const rec = { seq: ++seq, ts: e.ts, event: e.event, prev };
+      const hash = crypto.createHash('sha256').update(zp.canon(rec)).digest('hex');
+      prev = hash;
+      out += JSON.stringify({ ...rec, hash }) + '\n';
+    }
+    fs.writeFileSync(DB_LOG, out);
+    const v = zp.verifyLog(DB_LOG);                       // internal check only
+    const vAnchored = zp.verifyLog(DB_LOG, anchoredHead); // check against the witness
+    lastSize = 0; log.length = 0; readNewAudit();
+    broadcast({ type: 'audit', entries: log.slice(-40), chain: vAnchored });
+    return done({
+      internallyOk: v.ok, removed: all.length - kept.length,
+      head: v.head, anchored: anchoredHead, matches: vAnchored.ok,
+    });
+  }
+
   if (cmd.action === 'connect') {
-    note('alice-laptop -> finance-db:5432 ...');
+    note('officer-laptop -> finance-db:5432 ...');
+    const mark = logLines().length;
     const r = await ask(alice.proc, { cmd: 'connect', target: db.id, port: 5432, payload: 'SELECT 1' }, (e) => e.t === 'result');
-    note(r.ok ? `ALLOWED - encrypted round trip ${r.rttMs?.toFixed(2)} ms, reply "${r.reply}"`
-              : `DENIED - attacker sees "${r.reason}"`, r.ok ? 'ok' : 'deny');
+    done({ ok: r.ok, rttMs: r.rttMs, reply: r.reply, reason: r.reason, logReason: r.ok ? null : await denyReasonSince(mark) });
   }
   else if (cmd.action === 'wrongPort') {
-    note('alice-laptop -> finance-db:22 (no policy rule) ...');
+    note('officer-laptop -> finance-db:22 (no policy rule) ...');
+    const mark = logLines().length;
     const r = await ask(alice.proc, { cmd: 'connect', target: db.id, port: 22 }, (e) => e.t === 'result');
-    note(r.ok ? 'ALLOWED (unexpected)' : `DENIED - attacker sees "${r.reason}"`, r.ok ? 'ok' : 'deny');
+    done({ ok: r.ok, reason: await denyReasonSince(mark) });
   }
   else if (cmd.action === 'rogue') {
-    note('rogue-node -> finance-db:5432 (not on the roster) ...');
+    note('unknown-device -> finance-db:5432 (not on the roster) ...');
+    const mark = logLines().length;
     const r = await ask(rogue.proc, { cmd: 'connect', target: db.id, port: 5432 }, (e) => e.t === 'result');
-    note(r.ok ? 'ALLOWED (unexpected)' : `DENIED - attacker sees "${r.reason}"`, r.ok ? 'ok' : 'deny');
+    done({ ok: r.ok, reason: await denyReasonSince(mark) });
   }
   else if (cmd.action === 'enrollOne') {
     note('publishing a roster signed by ONE officer share ...');
     const r = await publishRoster({
-      peers: [...roster.peers, { id: rogue.id, idPub: rogue.idPub, staticPub: rogue.staticPub, name: 'rogue-node' }],
+      peers: [...roster.peers, { id: rogue.id, idPub: rogue.idPub, staticPub: rogue.staticPub, name: 'unknown-device' }],
       policy: roster.policy,
     }, 1);
-    note(r.ok ? 'ACCEPTED (unexpected)' : `REJECTED by the relay - "${r.message}"`, r.ok ? 'ok' : 'deny');
+    done({ ok: r.ok, message: r.message });
   }
   else if (cmd.action === 'enrollTwo') {
     note('two officers co-sign the same roster ...');
     const r = await publishRoster({
-      peers: [...roster.peers, { id: rogue.id, idPub: rogue.idPub, staticPub: rogue.staticPub, name: 'rogue-node' }],
+      peers: [...roster.peers, { id: rogue.id, idPub: rogue.idPub, staticPub: rogue.staticPub, name: 'unknown-device' }],
       policy: [...roster.policy, { from: rogue.id, to: agents['finance-db'].id, port: 5432, allow: true }],
     }, 2);
     await ask(db.proc, { cmd: 'refresh' }, (e) => e.t === 'roster');
-    note(r.ok ? 'ACCEPTED - two shares combined into ONE valid signature' : `REJECTED - ${r.message}`, r.ok ? 'ok' : 'deny');
+    done({ ok: r.ok, message: r.message });
   }
   else if (cmd.action === 'revoke') {
-    note(`one officer revokes ${cmd.peer} ...`);
-    const r = await publishRevocation(0, [cmd.peer]);
+    const target = cmd.peer || (agents['officer-laptop'] && agents['officer-laptop'].id);
+    const r = await publishRevocation(0, [target]);
     await ask(db.proc, { cmd: 'refresh' }, (e) => e.t === 'roster');
-    note(r.ok ? 'revocation accepted - signed by a single officer, no quorum needed' : 'rejected', r.ok ? 'ok' : 'deny');
+    done({ ok: r.ok });
   }
   else if (cmd.action === 'lease') {
     note('issuing alice a 6-second lease ...');
@@ -223,24 +337,26 @@ async function handle(cmd) {
       policy: roster.policy,
     }, 2);
     await ask(db.proc, { cmd: 'refresh' }, (e) => e.t === 'roster');
-    note('lease issued - it expires on its own in 6 seconds', 'ok');
+    done({ ok: true });
   }
   else if (cmd.action === 'restore') {
     note('restoring the baseline roster ...');
     await publishRoster({
       peers: [
         { id: db.id, idPub: db.idPub, staticPub: db.staticPub, name: 'finance-db' },
-        { id: alice.id, idPub: alice.idPub, staticPub: alice.staticPub, name: 'alice-laptop' },
+        { id: alice.id, idPub: alice.idPub, staticPub: alice.staticPub, name: 'officer-laptop' },
       ],
       policy: [{ from: alice.id, to: db.id, port: 5432, allow: true }],
     }, 2);
     await ask(db.proc, { cmd: 'refresh' }, (e) => e.t === 'roster');
-    note('baseline restored', 'ok');
+    done({ ok: true });
   }
   else if (cmd.action === 'tamper') {
     note('editing one line of the audit log ...');
     try {
-      const lines = fs.readFileSync(DB_LOG, 'utf8').trim().split('\n');
+      const original = fs.readFileSync(DB_LOG, 'utf8');
+      fs.writeFileSync(DB_LOG + '.orig', original);   // so the console can be put back
+      const lines = original.trim().split('\n');
       const i = Math.max(1, lines.findIndex((l) => l.includes('"deny"')));
       const e = JSON.parse(lines[i]);
       e.event = { type: 'flow', note: 'nothing to see here' };
@@ -248,13 +364,23 @@ async function handle(cmd) {
       fs.writeFileSync(DB_LOG, lines.join('\n') + '\n');
       const v = zp.verifyLog(DB_LOG);
       broadcast({ type: 'audit', entries: log.slice(-40), chain: v });
-      note(v.ok ? 'verifier missed it (unexpected)' : `verifier CAUGHT IT - ${v.reason} at line ${v.line}`, 'deny');
+      done({ ok: v.ok, reason: v.reason, line: v.line });
     } catch (err) { note('tamper failed: ' + err.message, 'deny'); }
   }
   else if (cmd.action === 'verify') {
+    const v = zp.verifyLog(DB_LOG, anchoredHead);
+    broadcast({ type: 'audit', entries: log.slice(-40), chain: v });
+    done({ ok: v.ok, entries: v.entries, reason: v.reason });
+  }
+  else if (cmd.action === 'untamper') {
+    if (fs.existsSync(DB_LOG + '.orig')) {
+      fs.writeFileSync(DB_LOG, fs.readFileSync(DB_LOG + '.orig'));
+      fs.unlinkSync(DB_LOG + '.orig');
+      lastSize = 0; log.length = 0; readNewAudit();
+    }
     const v = zp.verifyLog(DB_LOG);
     broadcast({ type: 'audit', entries: log.slice(-40), chain: v });
-    note(v.ok ? `chain intact - ${v.entries} entries recomputed` : `chain BROKEN - ${v.reason}`, v.ok ? 'ok' : 'deny');
+    done({ ok: v.ok, entries: v.entries });
   }
 }
 

@@ -85,6 +85,13 @@ async function refreshRoster() {
   for (const ev of revs) {
     if (!nostr.verifyEvent(ev)) continue;                          // forged - ignore
     let payload; try { payload = JSON.parse(ev.content); } catch { continue; }
+    // A revocation applies to the roster in force when it was signed, and to
+    // every roster after it - until the officers re-admit the peer with a
+    // NEWER quorum-signed roster. Without the version stamp a single officer
+    // could lock a machine out permanently, and a false alarm would be
+    // unrecoverable. With it, undoing a revocation still costs a full quorum,
+    // and replaying an old roster cannot clear one.
+    if (payload.rosterVersion !== undefined && roster.version > payload.rosterVersion) continue;
     for (const pid of payload.revoke || []) {
       const p = roster.peers.find((x) => x.id === pid);
       if (p && !p.revoked) {

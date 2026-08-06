@@ -3,267 +3,388 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ZeroPort — Operations Console</title>
+<title>ZeroPort — guided walkthrough</title>
 <style>
-  :root{
-    --bg:#05231A; --bg2:#031812; --panel:#0A3226; --panel2:#0E4132;
-    --line:#16453A; --green:#16C77F; --cyan:#2CD4E0;
-    --ink:#E8F5EF; --body:#B8D2C7; --mut:#7EA292; --red:#FF6B6B; --amber:#F0B429;
-    --mono:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{
-    background:var(--bg); color:var(--body); min-height:100vh;
-    font:14px/1.55 -apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,sans-serif;
-    background-image:
-      linear-gradient(rgba(22,199,127,.028) 1px,transparent 1px),
-      linear-gradient(90deg,rgba(22,199,127,.028) 1px,transparent 1px);
-    background-size:26px 26px;
-  }
-  .wrap{max-width:1380px;margin:0 auto;padding:0 22px 48px}
-  header{background:var(--bg2);border-bottom:2px solid var(--green);padding:16px 22px;margin-bottom:22px}
-  .brandwrap{max-width:1380px;margin:0 auto;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
-  .brand{display:flex;align-items:center;gap:11px}
-  .word{font-size:23px;font-weight:700;letter-spacing:.055em;color:var(--ink)}
-  .sub{font:600 9.5px/1 var(--mono);letter-spacing:.24em;color:var(--cyan);margin-top:5px}
-  .spacer{flex:1}
-  .live{display:flex;align-items:center;gap:8px;font:600 11px/1 var(--mono);letter-spacing:.1em}
-  .dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
-  .dot.off{background:var(--red);animation:none}
-  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(22,199,127,.55)}70%{box-shadow:0 0 0 9px rgba(22,199,127,0)}100%{box-shadow:0 0 0 0 rgba(22,199,127,0)}}
-  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:22px}
-  .stat{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:13px 15px}
-  .stat .k{font:600 9.5px/1 var(--mono);letter-spacing:.16em;color:var(--mut);margin-bottom:8px}
-  .stat .v{font:700 17px/1.15 var(--mono);color:var(--green);word-break:break-all}
-  .stat .v.cyan{color:var(--cyan)}
-  .stat .n{font-size:11px;color:var(--mut);margin-top:6px;line-height:1.4}
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
-  @media(max-width:980px){.grid{grid-template-columns:1fr}}
-  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:18px}
-  .panel h2{font:700 11px/1 var(--mono);letter-spacing:.17em;color:var(--ink);padding:14px 16px;
-    border-bottom:1px solid var(--line);background:var(--panel2);display:flex;align-items:center;gap:9px}
-  .panel h2 .num{color:var(--cyan)}
-  .panel .body{padding:16px}
-  .hint{font-size:11.5px;color:var(--mut);margin-bottom:14px;line-height:1.5}
-  .topo{display:flex;align-items:center;gap:12px}
-  .node{flex:1;background:var(--bg2);border:1px solid var(--green);border-radius:8px;padding:13px;text-align:center;transition:.25s}
-  .node.dead{border-color:var(--red);opacity:.55}
-  .node .nm{font-weight:600;color:var(--ink);font-size:13px}
-  .node .id{font:10.5px/1.5 var(--mono);color:var(--mut);margin-top:3px;word-break:break-all}
-  .node .tag{font:600 9px/1 var(--mono);letter-spacing:.13em;color:var(--cyan);margin-top:7px}
-  .link{flex:0 0 96px;text-align:center}
-  .link .bar{height:3px;background:var(--green);border-radius:2px;position:relative;overflow:hidden}
-  .link .bar::after{content:'';position:absolute;top:0;left:-40%;width:40%;height:100%;background:var(--cyan);animation:flow 1.9s linear infinite}
-  @keyframes flow{to{left:110%}}
-  .link .lbl{font:600 9px/1 var(--mono);letter-spacing:.1em;color:var(--green);margin-top:7px}
-  table{width:100%;border-collapse:collapse;font-size:12.5px}
-  th{font:600 9.5px/1 var(--mono);letter-spacing:.14em;color:var(--mut);text-align:left;padding:0 8px 9px;border-bottom:1px solid var(--line)}
-  td{padding:10px 8px;border-bottom:1px solid rgba(22,69,58,.55)}
-  tr:last-child td{border-bottom:none}
-  .mono{font-family:var(--mono);font-size:11px;color:var(--mut)}
-  .pill{display:inline-block;font:600 9.5px/1 var(--mono);letter-spacing:.09em;padding:4px 8px;border-radius:4px}
-  .pill.ok{background:rgba(22,199,127,.15);color:var(--green);border:1px solid rgba(22,199,127,.35)}
-  .pill.bad{background:rgba(255,107,107,.13);color:var(--red);border:1px solid rgba(255,107,107,.32)}
-  .pill.warn{background:rgba(240,180,41,.13);color:var(--amber);border:1px solid rgba(240,180,41,.32)}
-  .group{margin-bottom:17px}
-  .group .gl{font:600 9.5px/1 var(--mono);letter-spacing:.15em;color:var(--cyan);margin-bottom:9px}
-  .btns{display:flex;flex-wrap:wrap;gap:8px}
-  button{font:600 12px/1 inherit;color:var(--ink);background:var(--panel2);border:1px solid var(--line);
-    border-radius:6px;padding:9px 13px;cursor:pointer;transition:.15s}
-  button:hover{border-color:var(--green);color:var(--green);transform:translateY(-1px)}
-  button.danger:hover{border-color:var(--red);color:var(--red)}
-  .notes{margin-top:14px;border-top:1px solid var(--line);padding-top:13px;max-height:190px;overflow-y:auto}
-  .note{font:12px/1.5 var(--mono);padding:5px 0 5px 10px;color:var(--body);border-left:2px solid var(--line);margin-bottom:5px}
-  .note.ok{border-left-color:var(--green);color:var(--green)}
-  .note.deny{border-left-color:var(--red);color:var(--red)}
-  .note .t{color:var(--mut);margin-right:8px}
-  .chain{margin-left:auto}
-  .stream{max-height:330px;overflow-y:auto;font-family:var(--mono);font-size:11.5px}
-  .row{display:flex;gap:10px;padding:7px 9px;border-radius:5px;align-items:baseline}
-  .row:nth-child(odd){background:rgba(255,255,255,.018)}
-  .row .seq{color:var(--mut);min-width:34px}
-  .row .vb{min-width:56px;font-weight:600}
-  .row.allow .vb{color:var(--green)} .row.deny .vb{color:var(--red)} .row.info .vb{color:var(--cyan)}
-  .row .msg{color:var(--body);word-break:break-word}
-  .row .msg b{color:var(--ink);font-weight:600}
-  .empty{color:var(--mut);font-size:12px;padding:18px 0;text-align:center}
-  footer{margin-top:26px;padding-top:16px;border-top:1px solid var(--line);font-size:11px;color:var(--mut);
-    display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
-  ::-webkit-scrollbar{width:9px}
-  ::-webkit-scrollbar-track{background:var(--bg2)}
-  ::-webkit-scrollbar-thumb{background:var(--line);border-radius:5px}
+:root{
+  --bg:#04190F; --bg2:#031812; --panel:#0A2E22; --panel2:#0E4132;
+  --line:#164539; --green:#16C77F; --cyan:#2CD4E0;
+  --ink:#EAF6F0; --body:#B4CFC3; --mut:#7C9E90; --red:#FF6B6B; --amber:#F5B942;
+  --mono:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--body);min-height:100vh;
+  font:15px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,sans-serif;
+  background-image:linear-gradient(rgba(22,199,127,.022) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(22,199,127,.022) 1px,transparent 1px);background-size:28px 28px}
+header{background:var(--bg2);border-bottom:2px solid var(--green);padding:14px 22px;
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;position:sticky;top:0;z-index:20}
+.brand{display:flex;align-items:center;gap:10px}
+.word{font-weight:800;font-size:19px;letter-spacing:.04em;color:var(--ink)}
+.sub{font:600 9px/1 var(--mono);letter-spacing:.22em;color:var(--cyan);margin-top:4px}
+.spacer{flex:1}
+.hostinfo{font:600 11px/1.5 var(--mono);color:var(--mut);text-align:right}
+.hostinfo b{color:var(--green)}
+.live{display:flex;align-items:center;gap:7px;font:600 10px/1 var(--mono);letter-spacing:.1em}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:p 2s infinite}
+.dot.off{background:var(--red);animation:none}
+@keyframes p{0%{box-shadow:0 0 0 0 rgba(22,199,127,.5)}70%{box-shadow:0 0 0 8px rgba(22,199,127,0)}100%{box-shadow:0 0 0 0 rgba(22,199,127,0)}}
+
+.shell{display:grid;grid-template-columns:230px 1fr 340px;gap:18px;max-width:1560px;margin:0 auto;padding:20px 22px 50px}
+@media(max-width:1300px){.shell{grid-template-columns:200px 1fr}.side{grid-column:1/-1}}
+@media(max-width:900px){.shell{grid-template-columns:1fr}.rail{display:flex;overflow-x:auto;gap:8px}}
+
+/* rail */
+.rail{display:flex;flex-direction:column;gap:7px;position:sticky;top:78px;align-self:start}
+.rstep{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:11px 13px;cursor:pointer;transition:.18s;min-width:170px}
+.rstep:hover{border-color:var(--green)}
+.rstep.on{border-color:var(--green);background:var(--panel2)}
+.rstep.done .n{color:var(--green)}
+.rstep .n{font:700 9.5px/1 var(--mono);letter-spacing:.13em;color:var(--mut);margin-bottom:5px}
+.rstep .t{font-size:12.5px;font-weight:650;color:var(--ink);line-height:1.35}
+
+/* main */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:13px;overflow:hidden}
+.chead{padding:16px 22px;border-bottom:1px solid var(--line);background:var(--panel2)}
+.chead .n{font:700 10px/1 var(--mono);letter-spacing:.18em;color:var(--cyan);margin-bottom:8px}
+.chead h1{font-size:23px;line-height:1.2;color:var(--ink);font-weight:700}
+.cbody{padding:22px}
+.setup p{margin-bottom:13px;max-width:66ch}
+.setup p:last-child{margin-bottom:0}
+.acts{display:flex;flex-wrap:wrap;gap:9px;margin:20px 0 0}
+button{font:650 13px/1 inherit;color:var(--ink);background:var(--panel2);border:1px solid var(--line);
+  border-radius:8px;padding:12px 17px;cursor:pointer;transition:.16s}
+button:hover:not(:disabled){border-color:var(--green);color:var(--green);transform:translateY(-1px)}
+button:disabled{opacity:.35;cursor:not-allowed}
+button.go{background:var(--green);color:#04190F;border-color:var(--green)}
+button.go:hover:not(:disabled){background:#2ee295;color:#04190F}
+button.danger:hover:not(:disabled){border-color:var(--red);color:var(--red)}
+.out{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;font-family:var(--mono);font-size:12.5px;min-height:26px}
+.ln{padding:4px 0;display:flex;gap:10px;align-items:baseline}
+.ln .k{color:var(--mut);min-width:14px}
+.ln.ok .v{color:var(--green)} .ln.no .v{color:var(--red)} .ln.hi .v{color:var(--cyan)}
+.ln .v{color:var(--body)}
+.big{font:800 30px/1 var(--mono);margin:4px 0}
+.cmp{display:flex;gap:22px;flex-wrap:wrap;margin:10px 0 4px}
+.cmp div{flex:1;min-width:150px;background:var(--bg2);border:1px solid var(--line);border-radius:9px;padding:14px}
+.cmp .lbl{font:600 9.5px/1 var(--mono);letter-spacing:.12em;color:var(--mut);margin-bottom:9px}
+.idea{margin-top:18px;border-left:3px solid var(--cyan);background:rgba(44,212,224,.05);
+  padding:14px 18px;border-radius:0 9px 9px 0;font-size:14.5px;color:var(--body)}
+.idea b{color:var(--cyan);display:block;font:700 9.5px/1 var(--mono);letter-spacing:.16em;margin-bottom:7px}
+.nav{display:flex;justify-content:space-between;margin-top:18px;gap:10px}
+
+/* side */
+.side{display:flex;flex-direction:column;gap:16px;position:sticky;top:78px;align-self:start}
+.pnl{background:var(--panel);border:1px solid var(--line);border-radius:11px;overflow:hidden}
+.pnl h2{font:700 10px/1 var(--mono);letter-spacing:.15em;color:var(--ink);padding:12px 15px;
+  border-bottom:1px solid var(--line);background:var(--panel2);display:flex;align-items:center;gap:8px}
+.pnl .b{padding:13px 15px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+td{padding:7px 4px;border-bottom:1px solid rgba(22,69,58,.5)}
+tr:last-child td{border-bottom:none}
+.mono{font-family:var(--mono);font-size:10.5px;color:var(--mut)}
+.pill{display:inline-block;font:600 9px/1 var(--mono);letter-spacing:.07em;padding:4px 7px;border-radius:4px}
+.pill.ok{background:rgba(22,199,127,.14);color:var(--green);border:1px solid rgba(22,199,127,.32)}
+.pill.bad{background:rgba(255,107,107,.12);color:var(--red);border:1px solid rgba(255,107,107,.3)}
+.pill.warn{background:rgba(245,185,66,.12);color:var(--amber);border:1px solid rgba(245,185,66,.3)}
+.stream{max-height:300px;overflow-y:auto;font-family:var(--mono);font-size:11px}
+.row{display:flex;gap:8px;padding:6px 7px;border-radius:5px;align-items:baseline}
+.row:nth-child(odd){background:rgba(255,255,255,.016)}
+.row .s{color:var(--mut);min-width:26px}
+.row .vb{min-width:46px;font-weight:650}
+.row.allow .vb{color:var(--green)} .row.deny .vb{color:var(--red)} .row.info .vb{color:var(--cyan)}
+.row .m{color:var(--body);word-break:break-word}
+.empty{color:var(--mut);font-size:11.5px;padding:14px 0;text-align:center}
+::-webkit-scrollbar{width:8px}::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
 </style>
 </head>
 <body>
 
-<header><div class="brandwrap">
+<header>
   <div class="brand">
-    <svg width="34" height="34" viewBox="0 0 40 40" aria-hidden="true">
-      <path d="M20 4 L33.86 12 L33.86 28 L20 36 L6.14 28 L6.14 12 Z" fill="none" stroke="#16C77F" stroke-width="3.4"/>
-      <rect x="11.5" y="17.6" width="17" height="4.8" rx="2.4" fill="#2CD4E0"/>
-    </svg>
-    <div>
-      <div class="word">ZEROPORT</div>
-      <div class="sub">OPERATIONS CONSOLE</div>
-    </div>
+    <svg width="30" height="30" viewBox="0 0 40 40"><path d="M20 4 L33.9 12 L33.9 28 L20 36 L6.1 28 L6.1 12 Z" fill="none" stroke="#16C77F" stroke-width="3.5"/><rect x="11.5" y="17.6" width="17" height="4.8" rx="2.4" fill="#2CD4E0"/></svg>
+    <div><div class="word">ZEROPORT</div><div class="sub">GUIDED WALKTHROUGH</div></div>
   </div>
   <div class="spacer"></div>
-  <div class="live"><span class="dot" id="dot"></span><span id="connState">CONNECTING</span></div>
-</div></header>
+  <div class="hostinfo">running on <b id="netHost">…</b><br>five programs · real sockets</div>
+  <div class="live"><span class="dot" id="dot"></span><span id="cs">CONNECTING</span></div>
+</header>
 
-<div class="wrap">
-  <div class="stats">
-    <div class="stat"><div class="k">SIGNING AUTHORITY</div><div class="v cyan" id="sGroup">—</div>
-      <div class="n">FROST 2-of-3 group key. No officer holds it alone.</div></div>
-    <div class="stat"><div class="k">ENROLLED PEERS</div><div class="v" id="sPeers">—</div>
-      <div class="n">Present on the threshold-signed roster.</div></div>
-    <div class="stat"><div class="k">LISTENING PORTS</div><div class="v">0</div>
-      <div class="n">Agents bind one UDP socket and no TCP listener.</div></div>
-    <div class="stat"><div class="k">AUDIT CHAIN</div><div class="v" id="sChain">—</div>
-      <div class="n" id="sChainNote">SHA-256 hash chain, recomputed on demand.</div></div>
-  </div>
+<div class="shell">
+  <div class="rail" id="rail"></div>
 
-  <div class="grid">
-    <div>
-      <div class="panel">
-        <h2><span class="num">01</span> LIVE TOPOLOGY</h2>
-        <div class="body">
-          <p class="hint">Neither machine exposes a listening port. They were introduced through the rendezvous plane and now hold a direct encrypted tunnel; the middleman has left the path.</p>
-          <div class="topo">
-            <div class="node" id="nAlice"><div class="nm">alice-laptop</div>
-              <div class="id" id="idAlice">—</div><div class="tag">NO PUBLIC IP</div></div>
-            <div class="link"><div class="bar"></div><div class="lbl">DIRECT · NOISE IK</div></div>
-            <div class="node" id="nDb"><div class="nm">finance-db</div>
-              <div class="id" id="idDb">—</div><div class="tag">NO OPEN PORT</div></div>
-          </div>
-        </div>
+  <div>
+    <div class="card">
+      <div class="chead">
+        <div class="n" id="sn">STEP 1 OF 6</div>
+        <h1 id="st">…</h1>
       </div>
-      <div class="panel">
-        <h2><span class="num">02</span> SIGNED ROSTER</h2>
-        <div class="body">
-          <p class="hint">Membership is a Nostr event signed by the group key. A threshold signature can only be produced by two officers together, so verifying it <em>is</em> the quorum check — nothing counts signatures.</p>
-          <table><thead><tr><th>PEER</th><th>IDENTITY</th><th>STATE</th></tr></thead>
-          <tbody id="rosterBody"><tr><td colspan="3" class="empty">waiting for the roster…</td></tr></tbody></table>
-        </div>
-      </div>
-    </div>
-
-    <div>
-      <div class="panel">
-        <h2><span class="num">03</span> OPERATIONS</h2>
-        <div class="body">
-          <p class="hint">Every button issues a real command to a real agent process. Nothing here is scripted.</p>
-          <div class="group"><div class="gl">ACCESS</div><div class="btns">
-            <button data-a="connect">Connect alice → finance-db:5432</button>
-            <button data-a="wrongPort">Try a port with no policy</button>
-            <button data-a="rogue">Unenrolled node attempts access</button>
-          </div></div>
-          <div class="group"><div class="gl">ADMINISTRATION</div><div class="btns">
-            <button data-a="enrollOne">Enrol with ONE officer</button>
-            <button data-a="enrollTwo">Enrol with TWO officers</button>
-            <button data-a="lease">Issue a 6-second lease</button>
-            <button data-a="restore">Restore baseline</button>
-          </div></div>
-          <div class="group"><div class="gl">CONTAINMENT</div><div class="btns">
-            <button class="danger" data-a="revoke" data-peer="alice">Revoke alice-laptop</button>
-            <button data-a="verify">Verify audit chain</button>
-            <button class="danger" data-a="tamper">Tamper with the log</button>
-          </div></div>
-          <div class="notes" id="notes"></div>
-        </div>
-      </div>
-      <div class="panel">
-        <h2><span class="num">04</span> ATTRIBUTED FLOW LOG
-          <span class="chain" id="chainBadge"><span class="pill ok">CHAIN INTACT</span></span></h2>
-        <div class="body">
-          <p class="hint">Not IP-to-IP guesswork. Every line names the cryptographic identity and the policy that allowed it — or the exact reason it was refused.</p>
-          <div class="stream" id="stream"><div class="empty">no entries yet…</div></div>
+      <div class="cbody">
+        <div class="setup" id="setup"></div>
+        <div class="acts" id="acts"></div>
+        <div class="out" id="out"></div>
+        <div id="ideaBox"></div>
+        <div class="nav">
+          <button id="prev">← Back</button>
+          <button id="next" class="go">Next step →</button>
         </div>
       </div>
     </div>
   </div>
 
-  <footer>
-    <span>Live data from a running ZeroPort network — real BIP-340 identities, real FROST quorum, real Noise tunnels.</span>
-    <span>Independent hackathon proposal. Not an official Ministry of Interior publication.</span>
-  </footer>
+  <div class="side">
+    <div class="pnl">
+      <h2>WHO IS ON THE NETWORK</h2>
+      <div class="b"><table><tbody id="roster"><tr><td class="empty">waiting…</td></tr></tbody></table></div>
+    </div>
+    <div class="pnl">
+      <h2>WHAT THE SERVICE RECORDED <span style="margin-left:auto" id="chainBadge"><span class="pill ok">CHAIN INTACT</span></span></h2>
+      <div class="b"><div class="stream" id="stream"><div class="empty">nothing yet…</div></div></div>
+    </div>
+  </div>
 </div>
 
 <script>
 const $=(s)=>document.querySelector(s);
-let sock, state={};
+let sock,state={},cur=0,busy=false;
+const done=new Set();
+let LASTPEERS=[];
+let seenState=false;
+
+const STEPS=[
+ {t:'The door that isn’t there',reset:1,
+  setup:['Every attack starts the same way: find something that answers. A firewall answers. A VPN gateway answers. A bastion answers — that is how they get found, mapped, and eventually broken into.',
+         'So look for the service the way an attacker would, then try it as someone who belongs.'],
+  acts:[{id:'scan',label:'Scan for anything listening',go:true},
+        {id:'rawPacket',label:'Send a packet with no credentials'},
+        {id:'connect',label:'Connect as the officer'}],
+  idea:'The service is not hidden behind a lock — it has no door at all. Being able to reach it is a property of holding the right key, which is why the scanner and the officer can both be telling the truth.'},
+
+ {t:'How two machines meet when neither can be called',
+  setup:['Both machines sit behind their own network. Neither has a public address, so neither can dial the other. They need an introduction.',
+         'A rendezvous performs that introduction — and then gets out of the way. The same sealed packet is sent both ways so the cost of each is visible.'],
+  acts:[{id:'pathCompare',label:'Send it both ways',go:true}],
+  idea:'The introduction is brief and the middleman leaves. Traffic then runs directly between the two machines, so nothing sits in the middle of the conversation to slow it down, breach, or subpoena.'},
+
+ {t:'Who is allowed to change the guest list',
+  setup:['Someone has to decide which machines belong. In most systems that is an administrator account — and an account can be phished, coerced, or simply wrong.',
+         'Here the authority is split across three officers. Try it with one, then with two.'],
+  acts:[{id:'enrollOne',label:'One officer adds an unknown device',go:true},
+        {id:'enrollTwo',label:'A second officer co-signs'},
+        {id:'restore',label:'Put the safe list back'}],
+  idea:'No single administrator can quietly add a machine. Not because policy forbids it, but because the signature one person is able to produce does not exist as a valid signature.'},
+
+ {t:'What happens to a laptop that is stolen',reset:1,
+  setup:['A device is taken. Nobody notices for a day. In most networks its credentials keep working until a human revokes them.',
+         'Here permission is a lease that has to be renewed — so the question is what happens when a device simply stops asking.'],
+  acts:[{id:'lease',label:'Give the laptop a 6-second lease',go:true},
+        {id:'connect',label:'Try it now'},
+        {id:'waitExpire',label:'Wait for it to lapse, then try again'}],
+  idea:'Access decays unless it is renewed, so a device that goes quiet loses its permission on its own. The safe state is the default, and nobody has to be watching for it to hold.'},
+
+ {t:'The two ways in that do not work',reset:1,
+  setup:['Two attempts every real network faces: a machine that was never invited, and an invited machine reaching for something it was never given.',
+         'Then one officer removes a machine while it is connected.'],
+  acts:[{id:'rogue',label:'Unknown device tries the database',go:true},
+        {id:'wrongPort',label:'The officer reaches for SSH'},
+        {id:'revoke',label:'One officer removes her',danger:true}],
+  idea:'Permission is per-machine and per-port, and it is checked on every request. A device that is not on the list, or is reaching somewhere it should not, is refused without ever learning why.'},
+
+ {t:'The record of what happened',
+  setup:['A security team’s last line of defence is the log — which is a problem, because whoever breaks in can usually edit it.',
+         'Each entry carries the fingerprint of the one before it, and the end of the chain is published somewhere the attacker does not control.'],
+  acts:[{id:'anchor',label:'Publish the chain to an outside witness',go:true},
+        {id:'tamper',label:'Edit one line to hide a refusal',danger:true},
+        {id:'forge',label:'Replace the whole file with a clean one',danger:true},
+        {id:'untamper',label:'Put the log back'}],
+  idea:'The log is not trusted because we promise to look after it. Editing one line breaks the chain, and swapping the whole file fails against a fingerprint held by somebody else.'}
+];
+
 function connect(){
   sock=new WebSocket('ws://'+location.host);
-  sock.onopen=()=>{$('#dot').classList.remove('off');$('#connState').textContent='LIVE';};
-  sock.onclose=()=>{$('#dot').classList.add('off');$('#connState').textContent='DISCONNECTED';setTimeout(connect,1500);};
+  sock.onopen=()=>{$('#dot').classList.remove('off');$('#cs').textContent='LIVE';};
+  sock.onclose=()=>{$('#dot').classList.add('off');$('#cs').textContent='OFFLINE';setTimeout(connect,1500);};
   sock.onmessage=(e)=>handle(JSON.parse(e.data));
 }
 connect();
-document.querySelectorAll('button[data-a]').forEach(b=>{
-  b.onclick=()=>{
-    const peer=b.dataset.peer==='alice'?(state.roster&&state.roster.peers||[]).find(p=>p.name==='alice-laptop'):null;
-    sock.send(JSON.stringify({action:b.dataset.a,peer:peer?peer.id:undefined}));
-  };
-});
+
 const esc=(s)=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-const time=()=>new Date().toLocaleTimeString([],{hour12:false});
+const line=(k,v,cls='')=>`<div class="ln ${cls}"><span class="k">${k}</span><span class="v">${v}</span></div>`;
+
+function renderRail(){
+  $('#rail').innerHTML=STEPS.map((s,i)=>
+    `<div class="rstep${i===cur?' on':''}${done.has(i)?' done':''}" data-i="${i}">
+      <div class="n">STEP ${i+1}${done.has(i)?' ✓':''}</div><div class="t">${esc(s.t)}</div></div>`).join('');
+  document.querySelectorAll('.rstep').forEach(e=>e.onclick=()=>{cur=+e.dataset.i;renderStep();});
+}
+function renderStep(){
+  const s=STEPS[cur];
+  $('#sn').textContent=`STEP ${cur+1} OF ${STEPS.length}`;
+  $('#st').textContent=s.t;
+  $('#setup').innerHTML=s.setup.map(p=>`<p>${esc(p)}</p>`).join('');
+  $('#acts').innerHTML=s.acts.map(a=>
+    `<button data-a="${a.id}" class="${a.go?'go':''}${a.danger?' danger':''}">${esc(a.label)}</button>`).join('');
+  document.querySelectorAll('#acts button').forEach(b=>b.onclick=()=>run(b.dataset.a,b));
+  $('#out').innerHTML='';
+  $('#ideaBox').innerHTML='';
+  ensureBaseline();
+  $('#prev').disabled=cur===0;
+  $('#next').disabled=cur===STEPS.length-1;
+  renderRail();
+}
+$('#prev').onclick=()=>{if(cur>0){cur--;renderStep();}};
+$('#next').onclick=()=>{if(cur<STEPS.length-1){cur++;renderStep();}};
+
+// True when the roster is in its everyday state: exactly the two legitimate
+// machines, neither revoked nor on a lease. An empty list means we simply
+// have not heard from the network yet - that is not a reason to republish.
+// Republish the everyday roster if this step needs it and the network has
+// drifted (a lease issued, a peer revoked) from an earlier step.
+function ensureBaseline(){
+  if(!STEPS[cur].reset||atBaseline())return;
+  if(!sock||sock.readyState!==1)return;
+  $('#out').innerHTML=line('·','putting the network back to its everyday state first…','hi');
+  sock.send(JSON.stringify({action:'restore',quiet:1}));
+}
+function atBaseline(){
+  const p=LASTPEERS;
+  if(!p.length)return true;
+  if(p.length!==2)return false;
+  return !p.some(x=>x.revoked||x.leaseExpires);
+}
+function showIdea(){
+  if($('#ideaBox').innerHTML)return;
+  $('#ideaBox').innerHTML=`<div class="idea"><b>THE IDEA</b>${esc(STEPS[cur].idea)}</div>`;
+  done.add(cur);renderRail();
+}
+
+let waitTimer=null;
+async function run(action,btn){
+  if(busy)return; busy=true;
+  document.querySelectorAll('#acts button').forEach(b=>b.disabled=true);
+  const out=$('#out');
+
+  if(action==='waitExpire'){
+    let n=7;
+    const tick=()=>{
+      out.innerHTML=line('·',`waiting — nothing is being revoked, nobody is touching anything … ${n}s`,'hi');
+      if(--n<0){clearInterval(waitTimer);sock.send(JSON.stringify({action:'connect'}));}
+    };
+    tick(); waitTimer=setInterval(tick,1000);
+    return;
+  }
+  out.innerHTML=line('·','working…','hi');
+  sock.send(JSON.stringify({action}));
+}
+function unlock(){busy=false;document.querySelectorAll('#acts button').forEach(b=>b.disabled=false);}
+
 function handle(m){
   if(m.type==='state'){
     state=m;
-    $('#sGroup').textContent=m.groupPub?m.groupPub.slice(0,20)+'…':'—';
-    const peers=(m.roster&&m.roster.peers)||[];
-    $('#sPeers').textContent=peers.filter(p=>!p.revoked).length+' / '+peers.length;
-    renderRoster(peers);
-    const a=peers.find(p=>p.name==='alice-laptop'), d=peers.find(p=>p.name==='finance-db');
-    if(a){$('#idAlice').textContent=a.id;$('#nAlice').classList.toggle('dead',!!a.revoked);}
-    if(d){$('#idDb').textContent=d.id;}
+    if(m.netHost)$('#netHost').textContent=m.netHost;
+    renderRoster((m.roster&&m.roster.peers)||[]);
+    // On a fresh page load we render step 1 before the roster has arrived, so
+    // this is the first moment we can tell whether a previous run left the
+    // network in a changed state. Put it back if so.
+    if(!seenState){seenState=true;ensureBaseline();}
   }
-  else if(m.type==='audit'){renderStream(m.entries||[]);renderChain(m.chain);}
-  else if(m.type==='note'){addNote(m.message,m.level);}
-  else if(m.type==='boot'){addNote(m.message,'info');}
+  else if(m.type==='audit'){renderStream(m.entries||[],m.chain);renderChain(m.chain);}
+  else if(m.type==='result'){if(m.quiet){$('#out').innerHTML='';unlock();return;}result(m);}
 }
+
+function result(m){
+  const out=$('#out');let h='';
+  if(m.action==='scan'){
+    h+=line('·',`${m.scanned} ports probed on ${esc(m.host)}`);
+    h+=line('→',`database port 5432 — ${m.servicePortOpen?'OPEN':'nothing there'}`,m.servicePortOpen?'no':'ok');
+    h+=line('→',`the agent's own socket ${m.agentPort} — ${m.agentPortOpen?'open':'refuses TCP entirely'}`,'ok');
+    if(m.open.length)h+=line('·',`Open: ${esc(m.open.join(', '))} — the control plane, not the service.`);
+    if(m.other&&m.other.length)h+=line('·',`Also open: ${m.other.join(', ')} — other software on this machine, nothing to do with ZeroPort.`);
+  }
+  else if(m.action==='rawPacket'){
+    h+=line('→',m.replied?'It answered.':'No reply. The agent read it, found no valid signature, and stopped.',m.replied?'no':'ok');
+    h+=line('·','An attacker learns nothing — not even that something is there.');
+  }
+  else if(m.action==='connect'){
+    h+=m.ok?line('→',`Connected. Encrypted round trip returned "${esc(m.reply)}" in ${m.rttMs.toFixed(2)} ms.`,'ok')
+           :line('→',`Refused. The caller is told only: "${esc(m.reason)}"`,'no')
+            +(m.logReason?line('·',`The service recorded why: "${esc(m.logReason)}"`):'');
+  }
+  else if(m.action==='pathCompare'){
+    h+=`<div class="cmp">
+      <div><div class="lbl">VIA THE RENDEZVOUS · 2 HOPS</div><div class="big" style="color:var(--amber)">${m.relayed.toFixed(1)}<span style="font-size:14px"> ms</span></div>
+      <div style="font-size:11.5px;color:var(--mut)">it moved the bytes but could not read them</div></div>
+      <div><div class="lbl">DIRECT · 1 HOP</div><div class="big" style="color:var(--green)">${m.direct.toFixed(1)}<span style="font-size:14px"> ms</span></div>
+      <div style="font-size:11.5px;color:var(--mut)">the introducer has left the path</div></div></div>`;
+    if(m.direct>0)h+=line('→',`${Math.round(m.relayed/m.direct)}× faster once they have met.`,'ok');
+  }
+  else if(m.action==='enrollOne')h+=line('→',m.ok?'Accepted.':`The directory refuses it: "${esc(m.message)}"`,m.ok?'no':'ok')
+    +line('·','Not a permission error. One share cannot form a signature for the group key.');
+  else if(m.action==='enrollTwo')h+=line('→',m.ok?'Accepted. Two shares combined into one signature.':`Refused — ${esc(m.message)}`,m.ok?'ok':'no');
+  else if(m.action==='restore')h+=line('→','Safe list restored.','ok');
+  else if(m.action==='lease')h+=line('→','Lease issued. It expires in six seconds unless renewed.','hi');
+  else if(m.action==='rogue')h+=line('→',m.ok?'It got in.':'Dropped in silence.',m.ok?'no':'ok')
+    +line('·',`The service recorded: "${esc(m.reason||'')}"`);
+  else if(m.action==='wrongPort')h+=line('→',m.ok?'Allowed.':'Dropped.',m.ok?'no':'ok')
+    +line('·',`Log: "${esc(m.reason||'')}"`)
+    +line('·','Her permission is for one port on one machine, not for the network.');
+  else if(m.action==='revoke')h+=line('→','Removed — signed by a single officer.','ok')
+    +line('·','Adding a machine takes two people. Removing one takes one, deliberately.');
+  else if(m.action==='anchor')h+=line('→',m.ok?`Accepted by ${esc((m.calendar||'').replace('https://',''))} — a witness we do not control.`:'The outside service is unreachable right now.',m.ok?'ok':'no')
+    +line('·',`chain head ${esc((m.head||'').slice(0,32))}…`);
+  else if(m.action==='tamper')h+=line('→',m.ok===false?`Caught at line ${m.line} — the fingerprints stop matching.`:'The edit went unnoticed.',m.ok===false?'ok':'no')
+    +line('·',esc(m.reason||''));
+  else if(m.action==='verify')h+=line('→',m.ok?`Chain intact — ${m.entries} entries recomputed.`:`Broken — ${esc(m.reason||'')}`,m.ok?'ok':'no');
+  else if(m.action==='forge'){
+    if(m.needAnchor){h+=line('→','Publish the chain to a witness first — there is nothing to compare against yet.','no');}
+    else{
+      h+=line('·',`${m.removed} refusal${m.removed===1?'':'s'} deleted, then every fingerprint recomputed from scratch`);
+      h+=line('→',m.internallyOk?'The new file is internally consistent: every link checks out.':'The forgery is not even internally consistent.',m.internallyOk?'no':'ok');
+      h+=line('·',`its head    ${esc((m.head||'').slice(0,32))}…`);
+      h+=line('·',`published   ${esc((m.anchored||'').slice(0,32))}…`);
+      h+=line('→',m.matches?'It matches the witness — undetected.':'They do not match. Caught by a copy we do not hold.',m.matches?'no':'ok');
+    }
+  }
+  else if(m.action==='untamper')h+=line('→',m.ok?`Original restored — ${m.entries} entries, every link recomputes.`:'Restore failed.',m.ok?'ok':'no');
+  else h+=line('→',JSON.stringify(m));
+  out.innerHTML=h;
+  showIdea();unlock();
+}
+
+setInterval(()=>{if(LASTPEERS.some(p=>p.leaseExpires))renderRoster(LASTPEERS)},1000);
 function renderRoster(peers){
-  const tb=$('#rosterBody');
-  if(!peers.length){tb.innerHTML='<tr><td colspan="3" class="empty">waiting for the roster…</td></tr>';return;}
+  LASTPEERS=peers;
+  const tb=$('#roster');
+  if(!peers.length){tb.innerHTML='<tr><td class="empty">waiting…</td></tr>';return;}
   tb.innerHTML=peers.map(p=>{
-    let pill='<span class="pill ok">ACTIVE</span>';
-    if(p.revoked)pill='<span class="pill bad">REVOKED</span>';
-    else if(p.leaseExpires)pill='<span class="pill warn">LEASED</span>';
-    return '<tr><td><b style="color:var(--ink)">'+esc(p.name)+'</b></td><td class="mono">'+esc(p.id)+'</td><td>'+pill+'</td></tr>';
+    let pill='<span class="pill ok">ON THE LIST</span>';
+    if(p.revoked)pill='<span class="pill bad">REMOVED</span>';
+    else if(p.leaseExpires&&p.leaseExpires<Date.now())pill='<span class="pill bad">LEASE LAPSED</span>';
+    else if(p.leaseExpires)pill=`<span class="pill warn">LEASED · ${Math.max(0,Math.ceil((p.leaseExpires-Date.now())/1000))}s</span>`;
+    return `<tr><td><b style="color:var(--ink)">${esc(p.name)}</b><div class="mono">${esc(p.id)}</div></td><td style="text-align:right">${pill}</td></tr>`;
   }).join('');
 }
 function renderChain(c){
   if(!c)return;
-  const el=$('#chainBadge');
-  if(c.ok){
-    el.innerHTML='<span class="pill ok">CHAIN INTACT</span>';
-    $('#sChain').textContent='INTACT';$('#sChain').style.color='var(--green)';
-    $('#sChainNote').textContent=(c.entries||0)+' entries recomputed and verified.';
-  }else{
-    el.innerHTML='<span class="pill bad">CHAIN BROKEN</span>';
-    $('#sChain').textContent='BROKEN';$('#sChain').style.color='var(--red)';
-    $('#sChainNote').textContent=c.reason||'verification failed';
-  }
+  $('#chainBadge').innerHTML=c.ok?'<span class="pill ok">CHAIN INTACT</span>':'<span class="pill bad">CHAIN BROKEN</span>';
 }
-function renderStream(entries){
+function renderStream(entries,chain){
   const s=$('#stream');
-  if(!entries.length){s.innerHTML='<div class="empty">no entries yet…</div>';return;}
+  if(!entries.length){s.innerHTML='<div class="empty">nothing yet…</div>';return;}
+  // verifyLog reports the 1-based line where the fingerprints stop matching
+  const badSeq=(chain&&!chain.ok&&chain.line)?entries[chain.line-1]&&entries[chain.line-1].seq:null;
   s.innerHTML=entries.map(e=>{
-    const ev=e.event||{};let cls='info',vb='INFO',msg='';
-    if(ev.type==='flow'){cls='allow';vb='ALLOW';msg='<b>'+esc(ev.peer||'?')+'</b> → '+esc(ev.service||'')+' · '+(ev.bytes||0)+'B · via '+esc(ev.path||'direct');}
-    else if(ev.type==='deny'){cls='deny';vb='DENY';msg='<b>'+esc(ev.peer||'unknown')+'</b> — '+esc(ev.reason||'');}
-    else if(ev.type==='handshake'){vb='TUNNEL';msg='<b>'+esc(ev.peer||'')+'</b> — '+esc(ev.suite||'');}
-    else{msg=esc(ev.type||'');}
-    return '<div class="row '+cls+'"><span class="seq">#'+e.seq+'</span><span class="vb">'+vb+'</span><span class="msg">'+msg+'</span></div>';
+    const ev=e.event||{};let cls='info',vb='INFO',m='';
+    if(e.seq===badSeq){return `<div class="row deny"><span class="s">#${e.seq}</span><span class="vb">FORGED</span><span class="m">this line was edited — the fingerprint no longer matches</span></div>`;}
+    if(ev.type==='flow'){cls='allow';vb='ALLOW';m=`<b>${esc(ev.peer||'')}</b> → ${esc(ev.service||'')} · ${ev.bytes||0}B`;}
+    else if(ev.type==='deny'){cls='deny';vb='DENY';m=`<b>${esc(ev.peer||'unknown')}</b> — ${esc(ev.reason||'')}`;}
+    else if(ev.type==='handshake'){vb='TUNNEL';m=esc(ev.peer||'');}
+    else m=esc(ev.type||'');
+    return `<div class="row ${cls}"><span class="s">#${e.seq}</span><span class="vb">${vb}</span><span class="m">${m}</span></div>`;
   }).reverse().join('');
 }
-function addNote(msg,level){
-  const n=$('#notes'),d=document.createElement('div');
-  d.className='note '+(level||'info');
-  d.innerHTML='<span class="t">'+time()+'</span>'+esc(msg);
-  n.prepend(d);
-  while(n.children.length>40)n.lastChild.remove();
-}
+
+renderStep();
 </script>
 </body>
 </html>
