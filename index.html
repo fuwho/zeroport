@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ZeroPort — the safest port is the one you never opened</title>
 <meta name="description" content="Every VPN gateway and firewall has to listen on a public address. ZeroPort doesn't guard that door — it removes it. An interactive explanation of identity-native zero-trust access.">
-<meta name="theme-color" content="#F2EEE7">
+<meta name="theme-color" content="#04170F">
 <meta property="og:title" content="ZeroPort — the safest port is the one you never opened">
 <meta property="og:description" content="Nothing listens. There is nothing to scan. And the people who belong still connect in seconds, at full speed.">
 <meta property="og:type" content="website">
@@ -18,34 +18,37 @@
    the actions we want taken, and the numbers we are proud of.
    ═══════════════════════════════════════════════════════════════════ */
 :root{
-  --bg:#F2EEE7;      /* warm putty -- 14.2% below white, reads as paper */
-  --surface:#FFFFFF; /* cards sit above everything; white pops on warm */
-  --band:#FAF8F4;    /* alternating sections, lighter and warmer still */
-  --soft:#F8FAFC; --tint:#F1F5F9;
-  --line:#E7E2D9; --line-2:#D6CFC2;
+  --bg:#04170F;      /* deep green-black -- the page */
+  --surface:#0A2318; /* cards. LIGHTER than the page: on dark, elevation
+                        is luminance, because shadows have nothing to
+                        fall on. */
+  --band:#07200F;    /* alternating sections, a step above the page */
+  --soft:#0A2318; --tint:#0D2C1E;
+  --line:#17402F; --line-2:#215A43;
 
-  --ink:#0F172A;   /* 17.4:1 */
-  --body:#475569;  /*  7.4:1 */
-  --mut:#5C6B7F;   /*  4.8:1 on the darkest band, 5.4:1 on white */
+  --ink:#EAF6F0;   /* 15.7:1 -- off-white, not pure: pure white on near
+                      black halates and tires the eye */
+  --body:#B8D0C5;  /* 10.2:1 */
+  --mut:#8AA79A;   /*  6.2:1 */
 
-  --blue:#2563EB;      /* 5.2:1 */
-  --blue-700:#1D4ED8;  /* 7.1:1 */
-  --blue-50:#EFF6FF; --blue-100:#DBEAFE;
+  --blue:#60A5FA;      /* 6.4:1 -- lifted; #2563EB is unreadable on dark */
+  --blue-700:#8CC0FF;  /* 9.1:1 */
+  --blue-50:#0C1E33; --blue-100:#1B3A5C;   /* tints invert to dark fills */
 
-  --green:#059669; --green-700:#047857;  /* 5.5:1 */
-  --green-50:#ECFDF5; --green-100:#D1FAE5;
+  --green:#22D48A; --green-700:#3FE3A0;  /* 8.5:1 */
+  --green-50:#06251A; --green-100:#0F4230;
 
-  --red:#B91C1C; --red-50:#FEF2F2;  /* 5.96:1 on the tint, 6.5:1 on white */
-  --amber:#B45309; --amber-50:#FFFBEB;
+  --red:#FF8A8A; --red-50:#2A1113;
+  --amber:#F5B942; --amber-50:#2A1F0A;
 
   --mono:ui-monospace,'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;
   --sans:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
 
   /* Ambient elevation — light from above, wide and soft, never grey mush. */
-  --sh-1:0 1px 2px rgba(15,23,42,.04),0 1px 3px rgba(15,23,42,.06);
-  --sh-2:0 2px 4px rgba(15,23,42,.04),0 6px 16px rgba(15,23,42,.06);
-  --sh-3:0 4px 8px rgba(15,23,42,.04),0 14px 32px rgba(15,23,42,.09);
-  --sh-4:0 10px 20px rgba(15,23,42,.05),0 28px 64px rgba(15,23,42,.12);
+  --sh-1:0 1px 2px rgba(0,0,0,.28);
+  --sh-2:0 2px 6px rgba(0,0,0,.34),0 8px 20px rgba(0,0,0,.22);
+  --sh-3:0 4px 10px rgba(0,0,0,.38),0 16px 38px rgba(0,0,0,.28);
+  --sh-4:0 10px 24px rgba(0,0,0,.42),0 30px 70px rgba(0,0,0,.34);
 
   --r-sm:8px; --r:12px; --r-lg:16px; --r-xl:22px;
   --max:1140px;
@@ -89,7 +92,7 @@ code{
 }
 .sectionhead{max-width:70ch}
 
-::selection{background:var(--blue-100);color:var(--ink)}
+::selection{background:var(--blue-100);color:#fff}
 ::-webkit-scrollbar{width:11px;height:11px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:6px;border:3px solid var(--bg)}
@@ -111,7 +114,7 @@ code{
 /* ── Navigation ───────────────────────────────────────────────────── */
 nav{
   position:sticky;top:0;z-index:60;
-  background:rgba(242,238,231,.88);backdrop-filter:saturate(180%) blur(14px);
+  background:rgba(4,23,15,.86);backdrop-filter:saturate(180%) blur(14px);
   border-bottom:1px solid var(--line);
 }
 .navin{max-width:var(--max);margin:0 auto;padding:14px 28px;display:flex;align-items:center;gap:16px}
@@ -137,8 +140,8 @@ nav{
 .btn .arw{transition:transform .18s var(--ease)}
 .btn:hover .arw{transform:translateX(3px)}
 /* Green = the action we want taken. */
-.btn.go{background:var(--green-700);color:#fff;box-shadow:0 1px 2px rgba(4,120,87,.28),0 6px 18px rgba(4,120,87,.22)}
-.btn.go:hover{background:#03684A;transform:translateY(-2px);box-shadow:0 3px 6px rgba(4,120,87,.26),0 14px 30px rgba(4,120,87,.26)}
+.btn.go{background:var(--green);color:#04170F;box-shadow:0 2px 10px rgba(34,212,138,.20)}
+.btn.go:hover{background:var(--green-700);transform:translateY(-2px);box-shadow:0 4px 20px rgba(34,212,138,.34)}
 .btn.go:active{transform:translateY(0)}
 .btn.ghost{background:var(--surface);border-color:var(--line-2);color:var(--ink);box-shadow:var(--sh-1)}
 .btn.ghost:hover{border-color:var(--blue);color:var(--blue-700);transform:translateY(-2px);box-shadow:var(--sh-2)}
@@ -163,8 +166,8 @@ html.anim .rv.in{opacity:1;transform:none}
 .hero::before{
   content:'';position:absolute;inset:-10% -20% auto -20%;height:130%;z-index:0;pointer-events:none;
   background:
-    radial-gradient(760px 460px at 76% 4%,rgba(37,99,235,.10),transparent 66%),
-    radial-gradient(620px 400px at 4% 94%,rgba(5,150,105,.10),transparent 64%);
+    radial-gradient(760px 460px at 76% 4%,rgba(96,165,250,.13),transparent 66%),
+    radial-gradient(620px 400px at 4% 94%,rgba(34,212,138,.12),transparent 64%);
 }
 .hero .wrap{position:relative;z-index:1}
 .herogrid{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);gap:clamp(36px,5vw,72px);align-items:center}
@@ -172,7 +175,7 @@ html.anim .rv.in{opacity:1;transform:none}
 h1 .hl{color:var(--blue);position:relative;white-space:nowrap}
 h1 .hl::after{
   content:'';position:absolute;left:-2px;right:-2px;bottom:.06em;height:.3em;
-  background:var(--green-100);border-radius:3px;z-index:-1;
+  background:var(--green-100);border-radius:3px;z-index:-1;opacity:.85;
 }
 .herosub{margin-top:24px;max-width:56ch}
 .microtrust{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:30px;font-size:13.5px;color:var(--mut)}
@@ -254,8 +257,8 @@ button.act{
 }
 button.act:hover:not(:disabled){border-color:var(--blue);color:var(--blue-700);transform:translateY(-1px);box-shadow:var(--sh-2)}
 button.act:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
-button.act.go{background:var(--green-700);border-color:var(--green-700);color:#fff}
-button.act.go:hover:not(:disabled){background:#03684A;border-color:#03684A;color:#fff}
+button.act.go{background:var(--green);border-color:var(--green);color:#04170F}
+button.act.go:hover:not(:disabled){background:var(--green-700);border-color:var(--green-700);color:#04170F}
 .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
 
 /* ── Journey (how it works) ───────────────────────────────────────── */
