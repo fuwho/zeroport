@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ZeroPort — the safest port is the one you never opened</title>
 <meta name="description" content="Every VPN gateway and firewall has to listen on a public address. ZeroPort doesn't guard that door — it removes it. An interactive explanation of identity-native zero-trust access.">
-<meta name="theme-color" content="#E9EEF6">
+<meta name="theme-color" content="#F2EEE7">
 <meta property="og:title" content="ZeroPort — the safest port is the one you never opened">
 <meta property="og:description" content="Nothing listens. There is nothing to scan. And the people who belong still connect in seconds, at full speed.">
 <meta property="og:type" content="website">
@@ -18,11 +18,11 @@
    the actions we want taken, and the numbers we are proud of.
    ═══════════════════════════════════════════════════════════════════ */
 :root{
-  --bg:#E9EEF6;      /* page canvas -- the console's slate, visible on sight */
-  --surface:#FFFFFF; /* cards and panels sit above everything */
-  --band:#F4F7FB;    /* alternating sections, LIGHTER than the canvas */
+  --bg:#F2EEE7;      /* warm putty -- 14.2% below white, reads as paper */
+  --surface:#FFFFFF; /* cards sit above everything; white pops on warm */
+  --band:#FAF8F4;    /* alternating sections, lighter and warmer still */
   --soft:#F8FAFC; --tint:#F1F5F9;
-  --line:#E2E8F0; --line-2:#CBD5E1;
+  --line:#E7E2D9; --line-2:#D6CFC2;
 
   --ink:#0F172A;   /* 17.4:1 */
   --body:#475569;  /*  7.4:1 */
@@ -111,7 +111,7 @@ code{
 /* ── Navigation ───────────────────────────────────────────────────── */
 nav{
   position:sticky;top:0;z-index:60;
-  background:rgba(233,238,246,.88);backdrop-filter:saturate(180%) blur(14px);
+  background:rgba(242,238,231,.88);backdrop-filter:saturate(180%) blur(14px);
   border-bottom:1px solid var(--line);
 }
 .navin{max-width:var(--max);margin:0 auto;padding:14px 28px;display:flex;align-items:center;gap:16px}
@@ -163,8 +163,8 @@ html.anim .rv.in{opacity:1;transform:none}
 .hero::before{
   content:'';position:absolute;inset:-10% -20% auto -20%;height:130%;z-index:0;pointer-events:none;
   background:
-    radial-gradient(760px 460px at 76% 4%,rgba(37,99,235,.09),transparent 66%),
-    radial-gradient(600px 380px at 6% 92%,rgba(5,150,105,.075),transparent 64%);
+    radial-gradient(760px 460px at 76% 4%,rgba(37,99,235,.10),transparent 66%),
+    radial-gradient(620px 400px at 4% 94%,rgba(5,150,105,.10),transparent 64%);
 }
 .hero .wrap{position:relative;z-index:1}
 .herogrid{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);gap:clamp(36px,5vw,72px);align-items:center}
