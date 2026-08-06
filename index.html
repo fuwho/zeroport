@@ -3,217 +3,481 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ZeroPort — a network with no door to knock on</title>
-<meta name="description" content="ZeroPort removes the listening port instead of guarding it. An interactive explanation of identity-native zero-trust access.">
-<meta property="og:title" content="ZeroPort — a network with no door to knock on">
-<meta property="og:description" content="Zero ports. Zero trust. Zero blind spots.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath d='M20 4 L33.9 12 L33.9 28 L20 36 L6.1 28 L6.1 12 Z' fill='none' stroke='%2316C77F' stroke-width='4'/%3E%3Crect x='11.5' y='17.6' width='17' height='4.8' rx='2.4' fill='%232CD4E0'/%3E%3C/svg%3E">
+<title>ZeroPort — the safest port is the one you never opened</title>
+<meta name="description" content="Every VPN gateway and firewall has to listen on a public address. ZeroPort doesn't guard that door — it removes it. An interactive explanation of identity-native zero-trust access.">
+<meta name="theme-color" content="#ffffff">
+<meta property="og:title" content="ZeroPort — the safest port is the one you never opened">
+<meta property="og:description" content="Nothing listens. There is nothing to scan. And the people who belong still connect in seconds, at full speed.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath d='M20 4 L33.9 12 L33.9 28 L20 36 L6.1 28 L6.1 12 Z' fill='none' stroke='%232563EB' stroke-width='4'/%3E%3Crect x='11.5' y='17.6' width='17' height='4.8' rx='2.4' fill='%23059669'/%3E%3C/svg%3E">
 <style>
+/* ═══════════════════════════════════════════════════════════════════
+   ZeroPort design tokens
+   Every text colour below clears WCAG AA (4.5:1) against its surface.
+   Blue carries the brand and navigation. Green carries momentum:
+   the actions we want taken, and the numbers we are proud of.
+   ═══════════════════════════════════════════════════════════════════ */
 :root{
-  --bg:#04190F; --bg2:#031812; --panel:#0A2E22; --panel2:#0E4132;
-  --line:#164539; --green:#16C77F; --green2:#0E9A62; --cyan:#2CD4E0;
-  --ink:#EAF6F0; --body:#B4CFC3; --mut:#7C9E90; --red:#FF6B6B; --amber:#F5B942;
-  --mono:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;
-  --max:1080px;
+  --bg:#FFFFFF; --soft:#F8FAFC; --tint:#F1F5F9;
+  --line:#E2E8F0; --line-2:#CBD5E1;
+
+  --ink:#0F172A;   /* 17.4:1 */
+  --body:#475569;  /*  7.4:1 */
+  --mut:#64748B;   /*  4.9:1 */
+
+  --blue:#2563EB;      /* 5.2:1 */
+  --blue-700:#1D4ED8;  /* 7.1:1 */
+  --blue-50:#EFF6FF; --blue-100:#DBEAFE;
+
+  --green:#059669; --green-700:#047857;  /* 5.5:1 */
+  --green-50:#ECFDF5; --green-100:#D1FAE5;
+
+  --red:#DC2626; --red-50:#FEF2F2;
+  --amber:#B45309; --amber-50:#FFFBEB;
+
+  --mono:ui-monospace,'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;
+  --sans:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+
+  /* Ambient elevation — light from above, wide and soft, never grey mush. */
+  --sh-1:0 1px 2px rgba(15,23,42,.04),0 1px 3px rgba(15,23,42,.06);
+  --sh-2:0 2px 4px rgba(15,23,42,.04),0 6px 16px rgba(15,23,42,.06);
+  --sh-3:0 4px 8px rgba(15,23,42,.04),0 14px 32px rgba(15,23,42,.09);
+  --sh-4:0 10px 20px rgba(15,23,42,.05),0 28px 64px rgba(15,23,42,.12);
+
+  --r-sm:8px; --r:12px; --r-lg:16px; --r-xl:22px;
+  --max:1140px;
+  --ease:cubic-bezier(.2,.7,.3,1);
 }
+
 *{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
 body{
   background:var(--bg);color:var(--body);
-  font:16px/1.65 -apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,Helvetica,sans-serif;
-  -webkit-font-smoothing:antialiased;overflow-x:hidden;
+  font:16px/1.7 var(--sans);
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+  overflow-x:hidden;
 }
-.wrap{max-width:var(--max);margin:0 auto;padding:0 24px}
-section{padding:96px 0;position:relative}
-@media(max-width:720px){section{padding:64px 0}}
-h1{font-size:clamp(34px,6.2vw,64px);line-height:1.06;letter-spacing:-.025em;color:var(--ink);font-weight:800}
-h2{font-size:clamp(26px,3.6vw,40px);line-height:1.15;letter-spacing:-.02em;color:var(--ink);font-weight:700;margin-bottom:18px}
-p{margin-bottom:16px;max-width:64ch}
-.lead{font-size:clamp(17px,2vw,21px);line-height:1.6}
-.eyebrow{font:700 11px/1 var(--mono);letter-spacing:.22em;color:var(--cyan);margin-bottom:16px;text-transform:uppercase}
-.dim{color:var(--mut)}
+.wrap{max-width:var(--max);margin:0 auto;padding:0 28px}
+@media(max-width:560px){.wrap{padding:0 20px}}
+section{padding:112px 0;position:relative}
+@media(max-width:820px){section{padding:76px 0}}
+
+/* ── Type: one scale, generous rhythm, prose capped for effortless reading ── */
+h1{font-size:clamp(38px,5.4vw,66px);line-height:1.04;letter-spacing:-.032em;color:var(--ink);font-weight:800}
+h2{font-size:clamp(28px,3.4vw,42px);line-height:1.14;letter-spacing:-.024em;color:var(--ink);font-weight:750}
+h3{font-size:19px;line-height:1.35;letter-spacing:-.011em;color:var(--ink);font-weight:700}
+p{margin-bottom:18px;max-width:63ch}
+p:last-child{margin-bottom:0}
+.lead{font-size:clamp(17px,1.5vw,20px);line-height:1.62;color:var(--body)}
 strong{color:var(--ink);font-weight:650}
-code{font-family:var(--mono);font-size:.9em;color:var(--cyan);background:rgba(44,212,224,.09);padding:2px 6px;border-radius:4px}
-nav{position:sticky;top:0;z-index:50;background:rgba(4,25,15,.86);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
-.navin{max-width:var(--max);margin:0 auto;padding:13px 24px;display:flex;align-items:center;gap:14px}
-.logo{display:flex;align-items:center;gap:10px;text-decoration:none}
-.logo .w{font-weight:800;font-size:17px;letter-spacing:.03em;color:var(--ink)}
-.navlinks{margin-left:auto;display:flex;gap:22px}
-.navlinks a{color:var(--mut);text-decoration:none;font-size:13.5px;font-weight:550;transition:.15s}
-.navlinks a:hover{color:var(--green)}
-@media(max-width:720px){.navlinks{display:none}}
-.hero{padding:104px 0 88px;position:relative;overflow:hidden}
-.hero::before{content:'';position:absolute;inset:0;z-index:0;opacity:.5;
-  background:radial-gradient(720px 420px at 78% 12%,rgba(22,199,127,.14),transparent 62%),
-             radial-gradient(560px 340px at 12% 88%,rgba(44,212,224,.09),transparent 60%);}
-.hero .wrap{position:relative;z-index:1}
-.hero h1 em{font-style:normal;color:var(--green);position:relative;white-space:nowrap}
-.hero h1 em::after{content:'';position:absolute;left:0;right:0;bottom:.1em;height:.09em;background:var(--cyan);opacity:.55}
-.heroSub{margin-top:22px;max-width:60ch}
-.cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:32px}
-.btn{display:inline-flex;align-items:center;gap:9px;text-decoration:none;cursor:pointer;
-  font:650 14px/1 inherit;padding:13px 20px;border-radius:8px;transition:.18s;border:1px solid transparent}
-.btn.primary{background:var(--green);color:#04190F}
-.btn.primary:hover{background:#2ee295;transform:translateY(-2px)}
-.btn.ghost{border-color:var(--line);color:var(--ink);background:var(--panel)}
-.btn.ghost:hover{border-color:var(--green);color:var(--green);transform:translateY(-2px)}
-/* Progressive enhancement: content is visible by default. The reveal animation
-   is only applied once JS confirms it can drive it, so a browser that never
-   fires IntersectionObserver shows the page rather than a blank screen. */
-.rv{transition:opacity .7s cubic-bezier(.2,.7,.3,1),transform .7s cubic-bezier(.2,.7,.3,1)}
-html.anim .rv{opacity:0;transform:translateY(20px)}
+a{color:var(--blue-700)}
+.eyebrow{
+  display:inline-flex;align-items:center;gap:9px;
+  font:700 11.5px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--blue);margin-bottom:18px;
+}
+.eyebrow::before{content:'';width:22px;height:2px;border-radius:2px;background:var(--blue);opacity:.5}
+.kicker{font:700 12px/1 var(--sans);letter-spacing:.13em;text-transform:uppercase;color:var(--mut)}
+code{
+  font-family:var(--mono);font-size:.87em;color:var(--blue-700);
+  background:var(--blue-50);border:1px solid var(--blue-100);
+  padding:2px 7px;border-radius:6px;white-space:nowrap;
+}
+.sectionhead{max-width:70ch}
+
+/* ── Focus: always visible, never ugly ── */
+:where(a,button,[tabindex]):focus-visible{
+  outline:2px solid var(--blue);outline-offset:3px;border-radius:6px;
+}
+
+/* ── Navigation ───────────────────────────────────────────────────── */
+nav{
+  position:sticky;top:0;z-index:60;
+  background:rgba(255,255,255,.82);backdrop-filter:saturate(180%) blur(14px);
+  border-bottom:1px solid var(--line);
+}
+.navin{max-width:var(--max);margin:0 auto;padding:14px 28px;display:flex;align-items:center;gap:16px}
+.logo{display:inline-flex;align-items:center;gap:10px;text-decoration:none}
+.logo .w{font-weight:800;font-size:17px;letter-spacing:.04em;color:var(--ink)}
+.navlinks{margin-left:auto;display:flex;align-items:center;gap:6px}
+.navlinks a{
+  color:var(--body);text-decoration:none;font-size:14px;font-weight:550;
+  padding:8px 13px;border-radius:var(--r-sm);transition:color .16s var(--ease),background .16s var(--ease);
+}
+.navlinks a:hover{color:var(--blue-700);background:var(--blue-50)}
+.navcta{margin-left:8px}
+@media(max-width:900px){.navlinks a:not(.navcta){display:none}}
+
+/* ── Buttons ──────────────────────────────────────────────────────── */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  text-decoration:none;cursor:pointer;white-space:nowrap;
+  font:650 15px/1 var(--sans);letter-spacing:-.005em;
+  padding:14px 22px;border-radius:10px;border:1px solid transparent;
+  transition:transform .18s var(--ease),box-shadow .18s var(--ease),background .18s var(--ease),border-color .18s var(--ease),color .18s var(--ease);
+}
+.btn .arw{transition:transform .18s var(--ease)}
+.btn:hover .arw{transform:translateX(3px)}
+/* Green = the action we want taken. */
+.btn.go{background:var(--green-700);color:#fff;box-shadow:0 1px 2px rgba(4,120,87,.28),0 6px 18px rgba(4,120,87,.22)}
+.btn.go:hover{background:#03684A;transform:translateY(-2px);box-shadow:0 3px 6px rgba(4,120,87,.26),0 14px 30px rgba(4,120,87,.26)}
+.btn.go:active{transform:translateY(0)}
+.btn.ghost{background:#fff;border-color:var(--line-2);color:var(--ink);box-shadow:var(--sh-1)}
+.btn.ghost:hover{border-color:var(--blue);color:var(--blue-700);transform:translateY(-2px);box-shadow:var(--sh-2)}
+.btn.sm{font-size:14px;padding:10px 16px;border-radius:9px}
+.cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:34px}
+
+/* ── Reveal on scroll (progressive enhancement) ───────────────────
+   Content is visible by default. The animation is only armed once JS
+   confirms it can drive it, so a browser that never fires the observer
+   shows the page rather than a blank screen. */
+.rv{transition:opacity .72s var(--ease),transform .72s var(--ease)}
+html.anim .rv{opacity:0;transform:translateY(18px)}
 html.anim .rv.in{opacity:1;transform:none}
-@media(prefers-reduced-motion:reduce){html.anim .rv{opacity:1;transform:none}}
-.demo{background:var(--bg2);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-top:28px}
-.demoHead{padding:13px 18px;border-bottom:1px solid var(--line);background:var(--panel);
-  display:flex;align-items:center;gap:10px;font:700 10.5px/1 var(--mono);letter-spacing:.16em;color:var(--mut)}
-.demoHead .tag{margin-left:auto;font-size:9.5px;color:var(--cyan);letter-spacing:.12em}
-.demoBody{padding:24px}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-@media(max-width:820px){.grid2{grid-template-columns:1fr}}
-button.act{font:650 13px/1 inherit;color:var(--ink);background:var(--panel2);border:1px solid var(--line);
-  border-radius:7px;padding:11px 16px;cursor:pointer;transition:.16s}
-button.act:hover{border-color:var(--green);color:var(--green)}
-button.act:disabled{opacity:.4;cursor:not-allowed}
-.term{font-family:var(--mono);font-size:12.5px;line-height:1.75;min-height:190px;white-space:pre-wrap;word-break:break-word}
-.term .g{color:var(--green)} .term .c{color:var(--cyan)} .term .r{color:var(--red)}
-.term .m{color:var(--mut)} .term .a{color:var(--amber)} .term .w{color:var(--ink)}
-.cursor{display:inline-block;width:8px;height:15px;background:var(--green);vertical-align:-2px;animation:bl 1.05s steps(2) infinite}
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  html.anim .rv{opacity:1;transform:none}
+  *{animation-duration:.001ms!important;transition-duration:.001ms!important}
+}
+
+/* ── Hero: asymmetric, 60/40, with the proof sitting beside the claim ── */
+.hero{padding:96px 0 84px;position:relative;overflow:hidden}
+.hero::before{
+  content:'';position:absolute;inset:-10% -20% auto -20%;height:130%;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(760px 460px at 76% 4%,rgba(37,99,235,.09),transparent 66%),
+    radial-gradient(600px 380px at 6% 92%,rgba(5,150,105,.075),transparent 64%);
+}
+.hero .wrap{position:relative;z-index:1}
+.herogrid{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);gap:clamp(36px,5vw,72px);align-items:center}
+@media(max-width:960px){.herogrid{grid-template-columns:1fr;gap:52px}}
+h1 .hl{color:var(--blue);position:relative;white-space:nowrap}
+h1 .hl::after{
+  content:'';position:absolute;left:-2px;right:-2px;bottom:.06em;height:.3em;
+  background:var(--green-100);border-radius:3px;z-index:-1;
+}
+.herosub{margin-top:24px;max-width:56ch}
+.microtrust{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:30px;font-size:13.5px;color:var(--mut)}
+.microtrust span{display:inline-flex;align-items:center;gap:7px}
+.tick{flex:none;width:15px;height:15px;color:var(--green)}
+
+/* Hero visual: two stacked cards, offset — the scan, then the officer. */
+.heroviz{position:relative;padding:10px 0}
+.vcard{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh-3);overflow:hidden}
+.vhead{
+  display:flex;align-items:center;gap:9px;padding:12px 16px;
+  border-bottom:1px solid var(--line);background:var(--soft);
+  font:650 11px/1 var(--mono);letter-spacing:.11em;color:var(--mut);text-transform:uppercase;
+}
+.vhead .chip{margin-left:auto;text-transform:none;letter-spacing:.02em;font-weight:600;font-size:10.5px;
+  color:var(--mut);background:var(--tint);border:1px solid var(--line);padding:3px 8px;border-radius:20px}
+.vbody{padding:18px 18px 20px;font-family:var(--mono);font-size:12.5px;line-height:1.85}
+.vrow{display:flex;justify-content:space-between;gap:14px;color:var(--mut)}
+.vrow b{font-weight:600;color:var(--red)}
+.vsum{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);color:var(--ink);font-weight:650}
+.vcard.b{
+  position:relative;margin:-14px 0 0 auto;width:min(92%,380px);z-index:2;
+  border-color:var(--green-100);box-shadow:var(--sh-4);
+}
+@media(max-width:960px){.vcard.b{width:100%;margin-left:0}}
+.vcard.b .vhead{background:var(--green-50);border-bottom-color:var(--green-100);color:var(--green-700)}
+.vcard.b .vhead .chip{background:#fff;border-color:var(--green-100);color:var(--green-700)}
+.vok{color:var(--green-700);font-weight:650}
+.vbig{font:800 30px/1 var(--sans);letter-spacing:-.03em;color:var(--ink);margin-top:4px}
+.vbig span{font-size:14px;font-weight:600;color:var(--mut);letter-spacing:0}
+
+/* ── Proof strip: honest social proof, right under the claim ─────── */
+.proof{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--soft);padding:34px 0}
+.proofin{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:28px;align-items:start}
+.pstat .n{font:800 clamp(26px,3vw,34px)/1 var(--sans);letter-spacing:-.03em;color:var(--green-700)}
+.pstat .l{margin-top:8px;font-size:13.5px;line-height:1.5;color:var(--mut)}
+.pstat .l b{color:var(--ink);font-weight:650;display:block}
+
+/* ── Cards & panels ───────────────────────────────────────────────── */
+.panel{
+  background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);
+  box-shadow:var(--sh-2);overflow:hidden;margin-top:28px;
+  transition:box-shadow .25s var(--ease),border-color .25s var(--ease);
+}
+.panel:hover{box-shadow:var(--sh-3);border-color:var(--line-2)}
+.phead{
+  display:flex;align-items:center;gap:10px;padding:15px 22px;
+  border-bottom:1px solid var(--line);background:var(--soft);
+}
+.phead .t{font:700 12.5px/1.3 var(--sans);letter-spacing:.02em;color:var(--ink)}
+.phead .num{
+  flex:none;width:24px;height:24px;border-radius:7px;display:grid;place-items:center;
+  background:var(--blue-50);color:var(--blue-700);font:700 11px/1 var(--mono);
+}
+.phead .chip{
+  margin-left:auto;font:600 10.5px/1 var(--sans);letter-spacing:.02em;color:var(--mut);
+  background:#fff;border:1px solid var(--line);padding:5px 10px;border-radius:20px;white-space:nowrap;
+}
+.pbody{padding:24px 22px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:26px}
+@media(max-width:820px){.grid2{grid-template-columns:1fr;gap:22px}}
+
+/* ── Terminal ─────────────────────────────────────────────────────── */
+.term{
+  font-family:var(--mono);font-size:12.5px;line-height:1.8;min-height:210px;
+  white-space:pre-wrap;word-break:break-word;color:var(--body);
+  background:var(--soft);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;
+}
+.term .g{color:var(--green-700);font-weight:600}
+.term .c{color:var(--blue-700)} .term .r{color:var(--red)}
+.term .m{color:var(--mut)} .term .a{color:var(--amber)} .term .w{color:var(--ink);font-weight:600}
+.caret{display:inline-block;width:7px;height:14px;background:var(--blue);vertical-align:-2px;animation:bl 1.05s steps(2) infinite}
 @keyframes bl{50%{opacity:0}}
-.steps{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:22px}
-.step{flex:1;min-width:150px;background:var(--panel);border:1px solid var(--line);border-radius:10px;
-  padding:15px;cursor:pointer;transition:.2s}
-.step:hover{border-color:var(--green2)}
-.step.on{border-color:var(--green);background:var(--panel2)}
-.step .n{font:700 10px/1 var(--mono);letter-spacing:.14em;color:var(--cyan);margin-bottom:9px}
-.step .t{font-weight:700;color:var(--ink);font-size:14.5px}
-.step .tech{font:600 10.5px/1 var(--mono);color:var(--mut);margin-top:5px}
-.stage{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:26px}
-.wire{display:flex;align-items:center;gap:14px;margin:8px 0 20px}
-.wnode{flex:1;text-align:center;padding:15px 10px;border-radius:9px;background:var(--panel);border:1px solid var(--line);transition:.3s}
-.wnode.live{border-color:var(--green);box-shadow:0 0 0 3px rgba(22,199,127,.09)}
-.wnode .nm{font-weight:700;color:var(--ink);font-size:13.5px}
-.wnode .st{font:600 9.5px/1 var(--mono);letter-spacing:.11em;color:var(--cyan);margin-top:7px}
-.wpath{flex:0 0 clamp(90px,18vw,190px);text-align:center}
-.wbar{height:4px;border-radius:3px;background:var(--line);position:relative;overflow:hidden;transition:.3s}
+button.act{
+  font:650 13.5px/1 var(--sans);color:var(--ink);background:#fff;
+  border:1px solid var(--line-2);border-radius:9px;padding:11px 17px;cursor:pointer;
+  box-shadow:var(--sh-1);
+  transition:transform .16s var(--ease),border-color .16s var(--ease),color .16s var(--ease),box-shadow .16s var(--ease);
+}
+button.act:hover:not(:disabled){border-color:var(--blue);color:var(--blue-700);transform:translateY(-1px);box-shadow:var(--sh-2)}
+button.act:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
+button.act.go{background:var(--green-700);border-color:var(--green-700);color:#fff}
+button.act.go:hover:not(:disabled){background:#03684A;border-color:#03684A;color:#fff}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+
+/* ── Journey (how it works) ───────────────────────────────────────── */
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+@media(max-width:820px){.steps{grid-template-columns:repeat(2,1fr)}}
+.step{
+  text-align:left;background:#fff;border:1px solid var(--line);border-radius:var(--r);
+  padding:16px;cursor:pointer;box-shadow:var(--sh-1);font:inherit;color:inherit;
+  transition:transform .2s var(--ease),border-color .2s var(--ease),box-shadow .2s var(--ease),background .2s var(--ease);
+}
+.step:hover{transform:translateY(-2px);border-color:var(--line-2);box-shadow:var(--sh-2)}
+.step.on{border-color:var(--blue);background:var(--blue-50);box-shadow:0 0 0 3px rgba(37,99,235,.09),var(--sh-2)}
+.step .n{font:700 10.5px/1 var(--mono);letter-spacing:.13em;color:var(--mut);margin-bottom:10px}
+.step.on .n{color:var(--blue)}
+.step .t{font-weight:700;color:var(--ink);font-size:15px;letter-spacing:-.012em}
+.step .tech{font:600 11px/1 var(--mono);color:var(--mut);margin-top:6px}
+.stage{background:var(--soft);border:1px solid var(--line);border-radius:var(--r-lg);padding:26px}
+.wire{display:flex;align-items:center;gap:16px;margin-bottom:22px}
+@media(max-width:640px){.wire{flex-direction:column;align-items:stretch;gap:12px}}
+.wnode{
+  flex:1;text-align:center;padding:16px 12px;border-radius:var(--r);
+  background:#fff;border:1px solid var(--line);box-shadow:var(--sh-1);
+}
+.wnode .nm{font-weight:700;color:var(--ink);font-size:14px;letter-spacing:-.01em}
+.wnode .st{font:600 10px/1 var(--mono);letter-spacing:.1em;color:var(--mut);margin-top:8px}
+.wpath{flex:0 0 clamp(110px,20vw,210px);text-align:center}
+.wbar{height:5px;border-radius:4px;background:var(--line-2);position:relative;overflow:hidden;transition:background .3s var(--ease)}
 .wbar.act{background:var(--green)}
-.wbar.act::after{content:'';position:absolute;top:0;left:-38%;width:38%;height:100%;background:var(--cyan);animation:fl 1.5s linear infinite}
-.wbar.slow{background:var(--amber);opacity:.8}
-.wbar.slow::after{content:'';position:absolute;top:0;left:-38%;width:38%;height:100%;background:rgba(255,255,255,.22);animation:fl 3.4s linear infinite}
+.wbar.act::after{content:'';position:absolute;top:0;left:-38%;width:38%;height:100%;background:rgba(255,255,255,.75);animation:fl 1.5s linear infinite}
+.wbar.slow{background:var(--amber);opacity:.85}
+.wbar.slow::after{content:'';position:absolute;top:0;left:-38%;width:38%;height:100%;background:rgba(255,255,255,.6);animation:fl 3.4s linear infinite}
 @keyframes fl{to{left:106%}}
-.wlbl{font:600 10px/1.4 var(--mono);letter-spacing:.08em;margin-top:9px;color:var(--mut)}
-.lat{font:800 26px/1 var(--mono);margin-top:6px;transition:.3s}
-.stepText{color:var(--body);font-size:15px;min-height:82px}
-.stepText b{color:var(--ink)}
-.officers{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
-.off{flex:1;min-width:120px;text-align:center;padding:14px 10px;border-radius:9px;cursor:pointer;
-  background:var(--panel);border:1px solid var(--line);transition:.18s;user-select:none}
-.off:hover{border-color:var(--green2)}
-.off.sel{border-color:var(--green);background:var(--panel2)}
-.off .ic{font-size:20px;margin-bottom:5px;opacity:.45;transition:.18s}
-.off.sel .ic{opacity:1}
-.off .nm{font-weight:650;color:var(--ink);font-size:13px}
-.off .sh{font:10px/1 var(--mono);color:var(--mut);margin-top:5px}
-.verdict{padding:15px 18px;border-radius:9px;font:650 14px/1.5 inherit;border:1px solid;transition:.25s}
-.verdict.ok{background:rgba(22,199,127,.1);border-color:rgba(22,199,127,.4);color:var(--green)}
-.verdict.no{background:rgba(255,107,107,.09);border-color:rgba(255,107,107,.35);color:var(--red)}
-.verdict .sub{display:block;font-weight:450;color:var(--body);font-size:13px;margin-top:6px}
-.leaseBar{height:9px;background:var(--panel2);border-radius:5px;overflow:hidden;margin:16px 0 10px}
-.leaseFill{height:100%;background:linear-gradient(90deg,var(--green),var(--cyan));width:100%;transition:width .25s linear}
+.wlbl{font:600 10.5px/1.4 var(--mono);letter-spacing:.07em;margin-top:11px;color:var(--mut)}
+.lat{font:800 27px/1 var(--sans);letter-spacing:-.03em;margin-top:7px;transition:color .3s var(--ease)}
+.stepText{color:var(--body);font-size:15.5px;line-height:1.7;min-height:88px;max-width:66ch}
+.stepText b{color:var(--ink);font-weight:650}
+
+/* ── Verdicts ─────────────────────────────────────────────────────── */
+.verdict{padding:16px 18px;border-radius:var(--r);font:650 14.5px/1.5 var(--sans);border:1px solid;transition:.25s var(--ease)}
+.verdict.ok{background:var(--green-50);border-color:var(--green-100);color:var(--green-700)}
+.verdict.no{background:var(--red-50);border-color:#FECACA;color:var(--red)}
+.verdict .sub{display:block;font-weight:450;color:var(--body);font-size:13.5px;line-height:1.6;margin-top:8px}
+
+/* ── Officers ─────────────────────────────────────────────────────── */
+.officers{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+@media(max-width:560px){.officers{grid-template-columns:1fr}}
+.off{
+  text-align:center;padding:16px 12px;border-radius:var(--r);cursor:pointer;font:inherit;color:inherit;
+  background:#fff;border:1px solid var(--line);box-shadow:var(--sh-1);user-select:none;
+  transition:transform .18s var(--ease),border-color .18s var(--ease),box-shadow .18s var(--ease),background .18s var(--ease);
+}
+.off:hover{transform:translateY(-2px);border-color:var(--line-2);box-shadow:var(--sh-2)}
+.off.sel{border-color:var(--green);background:var(--green-50);box-shadow:0 0 0 3px rgba(5,150,105,.1),var(--sh-2)}
+.off .ic{width:22px;height:22px;margin:0 auto 8px;color:var(--mut);transition:color .18s var(--ease)}
+.off.sel .ic{color:var(--green-700)}
+.off .nm{font-weight:650;color:var(--ink);font-size:14px}
+.off .sh{font:11px/1 var(--mono);color:var(--mut);margin-top:6px}
+
+/* ── Lease ────────────────────────────────────────────────────────── */
+.leaseBar{height:10px;background:var(--tint);border-radius:6px;overflow:hidden;margin:14px 0 10px;border:1px solid var(--line)}
+.leaseFill{height:100%;background:linear-gradient(90deg,var(--green),#34D399);width:100%;transition:width .25s linear}
 .leaseFill.dead{background:var(--red)}
-.chain{font-family:var(--mono);font-size:12px}
-.clink{display:flex;gap:11px;align-items:baseline;padding:9px 11px;border-radius:6px;border-left:3px solid var(--green);
-  background:var(--panel);margin-bottom:7px;transition:.22s;cursor:pointer}
-.clink:hover{background:var(--panel2)}
-.clink.broke{border-left-color:var(--red);background:rgba(255,107,107,.07)}
-.clink .h{color:var(--mut);font-size:10.5px;min-width:74px}
+
+/* ── Audit chain ──────────────────────────────────────────────────── */
+.chain{font-family:var(--mono);font-size:12.5px}
+.clink{
+  display:flex;gap:12px;align-items:baseline;padding:11px 13px;border-radius:9px;
+  border:1px solid var(--line);border-left:3px solid var(--green);background:#fff;
+  margin-bottom:8px;cursor:pointer;text-align:left;width:100%;font:inherit;
+  transition:background .2s var(--ease),transform .2s var(--ease),border-color .2s var(--ease);
+}
+.clink:hover{background:var(--soft);transform:translateX(2px)}
+.clink.broke{border-left-color:var(--red);border-color:#FECACA;background:var(--red-50)}
+.clink .h{color:var(--mut);font-size:11px;min-width:78px;flex:none}
 .clink .tx{color:var(--body);flex:1}
-.clink.broke .tx{color:var(--red)}
-.ev{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:14px}
-.evc{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:18px}
-.evc .n{font:800 21px/1 var(--mono);color:var(--green);margin-bottom:7px}
-.evc .l{font-weight:650;color:var(--ink);font-size:13.5px;margin-bottom:5px}
-.evc .d{font-size:12px;color:var(--mut);line-height:1.5}
-.note{border-left:3px solid var(--cyan);padding:14px 18px;background:rgba(44,212,224,.05);border-radius:0 9px 9px 0;margin:22px 0}
-.note strong{color:var(--cyan)}
-footer{border-top:1px solid var(--line);padding:44px 0 60px;color:var(--mut);font-size:13px}
-.fgrid{display:flex;justify-content:space-between;gap:22px;flex-wrap:wrap}
-footer a{color:var(--green);text-decoration:none}
+.clink.broke .tx{color:var(--red);font-weight:600}
+
+/* ── Evidence ─────────────────────────────────────────────────────── */
+/* Six cards, so three across — never a lone orphan on the last row. */
+.ev{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:900px){.ev{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.ev{grid-template-columns:1fr}}
+.evc{
+  background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);padding:22px;
+  box-shadow:var(--sh-1);
+  transition:transform .22s var(--ease),box-shadow .22s var(--ease),border-color .22s var(--ease);
+}
+.evc:hover{transform:translateY(-3px);box-shadow:var(--sh-3);border-color:var(--line-2)}
+.evc .n{
+  display:inline-block;font:700 12px/1 var(--mono);letter-spacing:.04em;
+  color:var(--green-700);background:var(--green-50);border:1px solid var(--green-100);
+  padding:6px 10px;border-radius:20px;margin-bottom:14px;
+}
+.evc .l{font-weight:700;color:var(--ink);font-size:15px;letter-spacing:-.012em;margin-bottom:7px}
+.evc .d{font-size:13.5px;color:var(--mut);line-height:1.6}
+
+/* ── Note ─────────────────────────────────────────────────────────── */
+.note{
+  display:flex;gap:14px;align-items:flex-start;
+  border:1px solid var(--blue-100);background:var(--blue-50);
+  padding:18px 20px;border-radius:var(--r);margin:26px 0 0;
+}
+.note .ic{flex:none;width:20px;height:20px;color:var(--blue);margin-top:2px}
+.note p{margin:0;font-size:14.5px;line-height:1.65;max-width:none}
+.note strong{color:var(--blue-700)}
+.note.plain{background:var(--soft);border-color:var(--line)}
+.note.plain .ic{color:var(--mut)}
+.note.plain strong{color:var(--ink)}
+
+/* ── Closing CTA ──────────────────────────────────────────────────── */
+.close{
+  text-align:center;background:var(--soft);border:1px solid var(--line);
+  border-radius:var(--r-xl);padding:clamp(40px,6vw,64px) clamp(24px,5vw,56px);box-shadow:var(--sh-2);
+}
+.close h2{margin-bottom:14px}
+.close p{margin:0 auto;max-width:56ch}
+.close .cta{justify-content:center;margin-top:30px}
+
+/* ── Footer ───────────────────────────────────────────────────────── */
+footer{border-top:1px solid var(--line);padding:44px 0 60px;color:var(--mut);font-size:13.5px;background:#fff}
+.fgrid{display:flex;justify-content:space-between;gap:28px;flex-wrap:wrap}
+footer a{color:var(--blue-700);text-decoration:none;font-weight:550}
 footer a:hover{text-decoration:underline}
+.disclaim{margin-top:6px;font-size:12.5px;max-width:44ch}
+@media(max-width:640px){.fgrid>div:last-child{text-align:left!important}.disclaim{max-width:none}}
 </style>
 </head>
 <body>
 
 <nav><div class="navin">
-  <a class="logo" href="#top">
-    <svg width="26" height="26" viewBox="0 0 40 40"><path d="M20 4 L33.9 12 L33.9 28 L20 36 L6.1 28 L6.1 12 Z" fill="none" stroke="#16C77F" stroke-width="3.6"/><rect x="11.5" y="17.6" width="17" height="4.8" rx="2.4" fill="#2CD4E0"/></svg>
+  <a class="logo" href="#top" aria-label="ZeroPort, back to top">
+    <svg width="26" height="26" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 4 L33.9 12 L33.9 28 L20 36 L6.1 28 L6.1 12 Z" fill="none" stroke="#2563EB" stroke-width="3.6"/><rect x="11.5" y="17.6" width="17" height="4.8" rx="2.4" fill="#059669"/></svg>
     <span class="w">ZEROPORT</span>
   </a>
   <div class="navlinks">
     <a href="#paradox">The paradox</a>
     <a href="#how">How it works</a>
     <a href="#safe">Why it's safe</a>
-    <a href="#real">What's real</a>
+    <a href="#evidence">Evidence</a>
+    <a class="btn go sm navcta" href="https://github.com/fuwho/zeroport/tree/main/demo" target="_blank" rel="noopener">Read the code</a>
   </div>
 </div></nav>
 
-<header class="hero" id="top"><div class="wrap">
-  <div class="eyebrow">Identity-native zero-trust access</div>
-  <h1>To defend a network,<br>we first have to <em>expose one</em>.</h1>
-  <p class="lead heroSub">
-    Every VPN gateway, firewall and bastion host must listen on a public address. Anything
-    that listens can be scanned, mapped, flooded, and exploited before a patch exists.
-    We have been guarding the door instead of removing it.
-  </p>
-  <p class="lead heroSub" style="color:var(--ink)">
-    <strong>ZeroPort removes the door.</strong> Nothing listens. There is no address to scan —
-    yet authorized peers connect in seconds, at full speed.
-  </p>
-  <div class="cta">
-    <a class="btn primary" href="#paradox">See how that is possible →</a>
-    <a class="btn ghost" href="https://github.com/fuwho/zeroport/tree/main/demo" target="_blank" rel="noopener">Read the code</a>
-  </div>
-</div></header>
-
-<section id="paradox"><div class="wrap">
-  <div class="rv">
-    <div class="eyebrow">01 — The paradox</div>
-    <h2>Scan it. You will find nothing.</h2>
-    <p class="lead">A scanner sweeps the internet looking for something that answers. ZeroPort's
-    protected services answer nothing, because nothing is listening. The obvious question is
-    how anyone legitimate ever gets in.</p>
-  </div>
-
-  <div class="demo rv">
-    <div class="demoHead">ATTACKER'S TERMINAL <span class="tag">ILLUSTRATION</span></div>
-    <div class="demoBody">
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px">
-        <button class="act" id="btnScan">Run a port scan</button>
-        <button class="act" id="btnConn" disabled>Now connect as an authorized officer</button>
-      </div>
-      <div class="term" id="scanOut"><span class="m"># waiting…</span><span class="cursor"></span></div>
+<header class="hero" id="top"><div class="wrap herogrid">
+  <div>
+    <div class="eyebrow">Identity-native zero trust</div>
+    <h1>The safest port is the one you <span class="hl">never opened</span>.</h1>
+    <p class="lead herosub">
+      Every VPN gateway, firewall and bastion has to listen on a public address. That is
+      how attackers find them — and everything after that is a race between their scanners
+      and your patches.
+    </p>
+    <p class="lead herosub" style="color:var(--ink)">
+      <strong>ZeroPort doesn't guard that door. It removes it.</strong> Nothing listens, so there
+      is nothing to scan — and the people who belong still connect in seconds, at full speed.
+    </p>
+    <div class="cta">
+      <a class="btn go" href="#paradox">See how that's possible <svg class="arw" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6"/></svg></a>
+      <a class="btn ghost" href="https://github.com/fuwho/zeroport/tree/main/demo" target="_blank" rel="noopener">Read the code</a>
+    </div>
+    <div class="microtrust">
+      <span><svg class="tick" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>No third-party dependencies</span>
+      <span><svg class="tick" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>Open source, end to end</span>
+      <span><svg class="tick" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>Runs on hardware you already own</span>
     </div>
   </div>
 
-  <div class="note rv"><strong>Why this is different.</strong> Port-knocking and single-packet
-  authorization still run a daemon that listens for the knock — there is still a surface, and
-  still a packet to replay or fuzz. ZeroPort has no listening surface to address at all.</div>
-</div></section>
+  <div class="heroviz" aria-hidden="true">
+    <div class="vcard">
+      <div class="vhead">Attacker's scanner <span class="chip">Illustration</span></div>
+      <div class="vbody">
+        <div class="vrow"><span>22 &nbsp;ssh</span><b>closed</b></div>
+        <div class="vrow"><span>443 https</span><b>closed</b></div>
+        <div class="vrow"><span>5432 postgres</span><b>closed</b></div>
+        <div class="vrow"><span>51820 wireguard</span><b>closed</b></div>
+        <div class="vsum">16 ports · 0 open · nothing answered</div>
+      </div>
+    </div>
+    <div class="vcard b">
+      <div class="vhead">Authorized officer <span class="chip">Illustration</span></div>
+      <div class="vbody">
+        <div class="vok">Connected.</div>
+        <div class="vbig">8<span> ms · direct tunnel</span></div>
+        <div style="margin-top:12px;color:var(--mut);font-size:11.5px;line-height:1.7">
+          Same machine. Same second.<br>Reachability is a property of the key, not the port.
+        </div>
+      </div>
+    </div>
+  </div>
+</div></header>
 
-<section id="how" style="background:var(--bg2)"><div class="wrap">
-  <div class="rv">
-    <div class="eyebrow">02 — How it works</div>
-    <h2>Four steps, and the middleman leaves.</h2>
-    <p class="lead">Two machines that cannot be dialled still need to find each other. They are
-    introduced briefly through a rendezvous, then talk directly — and the introducer drops out
-    of the path entirely.</p>
+<div class="proof"><div class="wrap proofin">
+  <div class="pstat"><div class="n">60/60</div><div class="l"><b>Cryptographic tests passing</b>Schnorr, FROST, Noise IK, Nostr, Tor, WireGuard</div></div>
+  <div class="pstat"><div class="n">0</div><div class="l"><b>Listening ports exposed</b>Nothing to scan, flood or fingerprint</div></div>
+  <div class="pstat"><div class="n">2 of 3</div><div class="l"><b>Officers to change access</b>No single administrator can act alone</div></div>
+  <div class="pstat"><div class="n">1 hop</div><div class="l"><b>After the introduction</b>The middleman leaves the path entirely</div></div>
+</div></div>
+
+<section id="paradox"><div class="wrap">
+  <div class="rv sectionhead">
+    <div class="eyebrow">01 — The paradox</div>
+    <h2>Scan it. You'll find nothing.</h2>
+    <p class="lead">A scanner sweeps the internet looking for something that answers. A ZeroPort
+    service answers nothing, because nothing is listening. Which raises the obvious question:
+    how does anyone legitimate ever get in?</p>
   </div>
 
-  <div class="rv" style="margin-top:30px">
+  <div class="panel rv">
+    <div class="phead"><span class="num">01</span><span class="t">Try it from both sides</span><span class="chip">Illustration</span></div>
+    <div class="pbody">
+      <div class="btnrow">
+        <button class="act go" id="btnScan" type="button">Run a port scan</button>
+        <button class="act" id="btnConn" type="button" disabled>Now connect as an authorized officer</button>
+      </div>
+      <div class="term" id="scanOut"><span class="m"># ready when you are…</span><span class="caret"></span></div>
+    </div>
+  </div>
+
+  <div class="note rv">
+    <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 16v-5M12 8h.01"/></svg>
+    <p><strong>Why this isn't port-knocking.</strong> Port-knocking and single-packet authorization
+    still run a daemon that listens for the knock — there is still a surface, and still a packet to
+    replay or fuzz. ZeroPort has no listening surface to address at all.</p>
+  </div>
+</div></section>
+
+<section id="how" style="background:var(--soft);border-block:1px solid var(--line)"><div class="wrap">
+  <div class="rv sectionhead">
+    <div class="eyebrow">02 — How it works</div>
+    <h2>Four steps, and then the middleman leaves.</h2>
+    <p class="lead">Two machines that can't be dialled still have to find each other. They're
+    introduced briefly through a rendezvous — then they talk directly, and the introducer drops
+    out of the path completely.</p>
+  </div>
+
+  <div class="rv" style="margin-top:34px">
     <div class="steps" id="steps"></div>
     <div class="stage">
       <div class="wire">
-        <div class="wnode live"><div class="nm">officer-laptop</div><div class="st">NO PUBLIC IP</div></div>
+        <div class="wnode"><div class="nm">officer-laptop</div><div class="st">NO PUBLIC IP</div></div>
         <div class="wpath">
           <div class="wbar" id="wbar"></div>
           <div class="wlbl" id="wlbl">not connected</div>
@@ -227,216 +491,256 @@ footer a:hover{text-decoration:underline}
 </div></section>
 
 <section id="safe"><div class="wrap">
-  <div class="rv">
-    <div class="eyebrow">03 — Why it is safe</div>
-    <h2>Three guarantees you can test.</h2>
-    <p class="lead">Removing the door is not enough on its own. These are the properties that
-    make the result trustworthy — each one is a mechanism, not a promise.</p>
+  <div class="rv sectionhead">
+    <div class="eyebrow">03 — Why it's safe</div>
+    <h2>Three guarantees you can test yourself.</h2>
+    <p class="lead">Removing the door isn't enough on its own. These are the properties that make
+    the result trustworthy — and each one is a mechanism, not a promise.</p>
   </div>
 
-  <div class="demo rv">
-    <div class="demoHead">GUARANTEE 01 — NO SINGLE ADMINISTRATOR CAN BETRAY IT <span class="tag">ILLUSTRATION</span></div>
-    <div class="demoBody">
-      <p style="margin-bottom:16px">The roster is signed by a key that is <strong>split across three
-      officers</strong>. Choose who signs and watch what the network does.</p>
+  <div class="panel rv">
+    <div class="phead"><span class="num">01</span><span class="t">No single administrator can betray it</span><span class="chip">Illustration</span></div>
+    <div class="pbody">
+      <p style="margin-bottom:18px">The roster is signed by a key <strong>split across three
+      officers</strong>. Pick who signs, and watch what the network does about it.</p>
       <div class="officers" id="officers"></div>
       <div class="verdict no" id="qVerdict">Select at least one officer.</div>
     </div>
   </div>
 
-  <div class="demo rv">
-    <div class="demoHead">GUARANTEE 02 — ACCESS EXPIRES BY ITSELF <span class="tag">ILLUSTRATION</span></div>
-    <div class="demoBody">
+  <div class="panel rv">
+    <div class="phead"><span class="num">02</span><span class="t">Access expires on its own</span><span class="chip">Illustration</span></div>
+    <div class="pbody">
       <div class="grid2">
         <div>
           <p>Authorization is a <strong>short lease</strong>, not a permanent membership. It has to be
           renewed while a device stays healthy and reachable.</p>
-          <p class="dim" style="font-size:14px">So a stolen laptop, switched off in a bag, loses its
-          access on its own. Nobody has to notice. Nobody has to press revoke.</p>
-          <button class="act" id="btnSteal" style="margin-top:6px">Take the device offline</button>
+          <p style="color:var(--mut);font-size:14.5px">So a stolen laptop, switched off in a bag, loses its
+          access by itself. Nobody has to notice. Nobody has to press revoke.</p>
+          <button class="act" id="btnSteal" type="button" style="margin-top:4px">Take the device offline</button>
         </div>
         <div>
-          <div style="font:600 11px/1 var(--mono);letter-spacing:.13em;color:var(--mut)">LEASE REMAINING</div>
+          <div class="kicker">Lease remaining</div>
           <div class="leaseBar"><div class="leaseFill" id="leaseFill"></div></div>
-          <div id="leaseTxt" style="font-family:var(--mono);font-size:13px;color:var(--green)">renewing — 60s</div>
-          <div class="verdict ok" id="leaseVerdict" style="margin-top:14px">ACCESS ALLOWED</div>
+          <div id="leaseTxt" style="font-family:var(--mono);font-size:13px;color:var(--green-700);font-weight:600">renewing — 60s</div>
+          <div class="verdict ok" id="leaseVerdict" style="margin-top:16px">ACCESS ALLOWED</div>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="demo rv">
-    <div class="demoHead">GUARANTEE 03 — THE LOG CANNOT BE QUIETLY REWRITTEN <span class="tag">ILLUSTRATION</span></div>
-    <div class="demoBody">
-      <p style="margin-bottom:16px">Every entry carries the hash of the one before it. Click any line
-      to try to erase it — the way an intruder would.</p>
+  <div class="panel rv">
+    <div class="phead"><span class="num">03</span><span class="t">The log can't be quietly rewritten</span><span class="chip">Illustration</span></div>
+    <div class="pbody">
+      <p style="margin-bottom:18px">Every entry carries the hash of the one before it. Click any line
+      to try to erase it, the way an intruder would.</p>
       <div class="chain" id="chain"></div>
-      <div class="verdict ok" id="chainVerdict" style="margin-top:14px">CHAIN INTACT — every link recomputes</div>
+      <div class="verdict ok" id="chainVerdict" style="margin-top:16px">CHAIN INTACT — every link recomputes</div>
     </div>
   </div>
 
-  <div class="note rv"><strong>And the visibility argument.</strong> Because every peer holds a
-  cryptographic identity, a log line reads <code>officer-laptop → national-system:5432, allowed by
-  policy #7</code> — not <code>10.0.4.12 → 10.0.9.3</code>. You stop guessing who did what.</div>
+  <div class="note rv">
+    <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 16v-5M12 8h.01"/></svg>
+    <p><strong>And you stop guessing who did what.</strong> Because every peer holds a cryptographic
+    identity, a log line reads <code>officer-laptop → national-system:5432</code> — not
+    <code>10.0.4.12 → 10.0.9.3</code>. Names, not addresses you have to go and look up.</p>
+  </div>
 </div></section>
 
-<section id="real" style="background:var(--bg2)"><div class="wrap">
-  <div class="rv">
-    <div class="eyebrow">04 — What is actually built</div>
-    <h2>The mechanisms above are implemented and tested.</h2>
-    <p class="lead">Everything on this page is an <strong>illustration</strong> of how the system works.
-    The system itself is real code with no third-party dependencies, and it runs from a terminal.</p>
+<section id="evidence" style="background:var(--soft);border-block:1px solid var(--line)"><div class="wrap">
+  <div class="rv sectionhead">
+    <div class="eyebrow">04 — Evidence</div>
+    <h2>Everything above is built, and it's tested.</h2>
+    <p class="lead">The widgets on this page illustrate how the system behaves. The system itself is
+    real code with no third-party dependencies, and it runs from a terminal on an ordinary machine.</p>
   </div>
 
-  <div class="ev rv" style="margin-top:26px">
-    <div class="evc"><div class="n">15/15</div><div class="l">BIP-340 Schnorr</div>
+  <div class="ev rv" style="margin-top:32px">
+    <div class="evc"><div class="n">15 / 15 PASSING</div><div class="l">BIP-340 Schnorr</div>
       <div class="d">Identities on secp256k1 — the exact scheme Nostr uses. Checked against the specification's own test vectors.</div></div>
-    <div class="evc"><div class="n">13/13</div><div class="l">FROST threshold signing</div>
+    <div class="evc"><div class="n">13 / 13 PASSING</div><div class="l">FROST threshold signing</div>
       <div class="d">Two of three officers emit one 64-byte signature. A lone officer cannot forge it — the mathematics refuses.</div></div>
-    <div class="evc"><div class="n">13/13</div><div class="l">Noise IK handshake</div>
+    <div class="evc"><div class="n">13 / 13 PASSING</div><div class="l">Noise IK handshake</div>
       <div class="d">WireGuard's own handshake, with per-session forward secrecy and a replay window.</div></div>
-    <div class="evc"><div class="n">12/12</div><div class="l">Nostr control plane</div>
+    <div class="evc"><div class="n">12 / 12 PASSING</div><div class="l">Nostr control plane</div>
       <div class="d">A real relay speaking NIP-01 over WebSocket. The roster is a signed, replaceable event.</div></div>
-    <div class="evc"><div class="n">4/4</div><div class="l">Tor onion rendezvous</div>
+    <div class="evc"><div class="n">4 / 4 PASSING</div><div class="l">Tor onion rendezvous</div>
       <div class="d">A genuine v3 onion service. Data written and read back through real Tor circuits.</div></div>
-    <div class="evc"><div class="n">3/3</div><div class="l">WireGuard kernel tunnel</div>
+    <div class="evc"><div class="n">3 / 3 PASSING</div><div class="l">WireGuard kernel tunnel</div>
       <div class="d">A real kernel interface whose peer list is controlled by threshold signatures.</div></div>
   </div>
 
-  <div class="note rv" style="margin-top:30px"><strong>Stated plainly.</strong> This page is a teaching
-  tool, not a live network — the widgets above illustrate mechanisms rather than execute them. The
-  working system, its test output, and an operations console that shows real data all live in the
-  repository. One gap remains: everything runs on a single machine, so NAT traversal and wide-area
-  latency are not yet demonstrated.</div>
+  <div class="note plain rv">
+    <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 16v-5M12 8h.01"/></svg>
+    <p><strong>Said plainly.</strong> This page is a teaching tool, not a running network — the widgets
+    illustrate the mechanisms rather than execute them. The working system, its test output, and an
+    operations console driven by real data are all in the repository. One gap remains: everything runs
+    on a single machine, so NAT traversal and wide-area latency aren't demonstrated yet.</p>
+  </div>
+</div></section>
 
-  <div class="cta rv" style="margin-top:26px">
-    <a class="btn primary" href="https://github.com/fuwho/zeroport/tree/main/demo" target="_blank" rel="noopener">See the implementation →</a>
-    <a class="btn ghost" href="https://github.com/fuwho/zeroport/blob/main/demo/transcript.txt" target="_blank" rel="noopener">Read a captured run</a>
+<section><div class="wrap">
+  <div class="close rv">
+    <h2>Don't take the page's word for it.</h2>
+    <p class="lead">Clone it, run the six-step walkthrough, and watch the scanner come back empty
+    while an authorized peer connects anyway — on your own machine, in about a minute.</p>
+    <div class="cta">
+      <a class="btn go" href="https://github.com/fuwho/zeroport/tree/main/demo" target="_blank" rel="noopener">See the implementation <svg class="arw" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6"/></svg></a>
+      <a class="btn ghost" href="https://github.com/fuwho/zeroport/blob/main/demo/transcript.txt" target="_blank" rel="noopener">Read a captured run</a>
+    </div>
   </div>
 </div></section>
 
 <footer><div class="wrap fgrid">
   <div>
-    <div style="color:var(--ink);font-weight:700;letter-spacing:.03em">ZEROPORT</div>
-    <div style="margin-top:5px">Zero ports. Zero trust. Zero blind spots.</div>
+    <div style="display:flex;align-items:center;gap:9px">
+      <svg width="20" height="20" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 4 L33.9 12 L33.9 28 L20 36 L6.1 28 L6.1 12 Z" fill="none" stroke="#2563EB" stroke-width="4"/><rect x="11.5" y="17.6" width="17" height="4.8" rx="2.4" fill="#059669"/></svg>
+      <span style="color:var(--ink);font-weight:800;letter-spacing:.04em">ZEROPORT</span>
+    </div>
+    <div style="margin-top:8px">Zero ports. Zero trust. Zero blind spots.</div>
   </div>
   <div style="text-align:right">
     <div><a href="https://github.com/fuwho/zeroport" target="_blank" rel="noopener">github.com/fuwho/zeroport</a></div>
-    <div style="margin-top:5px;font-size:12px">Independent hackathon proposal. Not an official Ministry of Interior publication.</div>
+    <div class="disclaim">Independent hackathon proposal. Not an official Ministry of Interior publication.</div>
   </div>
 </div></footer>
 
 <script>
-const $=(s)=>document.querySelector(s), $$=(s)=>Array.prototype.slice.call(document.querySelectorAll(s));
-const sleep=(ms)=>new Promise(r=>setTimeout(r,ms));
+var $=function(s){return document.querySelector(s);};
+var $$=function(s){return Array.prototype.slice.call(document.querySelectorAll(s));};
+var sleep=function(ms){return new Promise(function(r){setTimeout(r,ms);});};
 
+/* Reveal on scroll — armed only when we know we can drive it. */
 if('IntersectionObserver' in window){
   document.documentElement.classList.add('anim');
-  const io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:.12});
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){
+    if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}
+  });},{threshold:.1});
   $$('.rv').forEach(function(e){io.observe(e);});
-  /* Failsafe: if nothing has revealed shortly after load, abandon the animation
+  /* Failsafe: if nothing revealed shortly after load, drop the animation
      entirely rather than risk leaving the page invisible. */
   setTimeout(function(){
     if(!document.querySelector('.rv.in')) document.documentElement.classList.remove('anim');
   },2200);
 }
 
-/* ---------- 01 scan ---------- */
-const PORTS=[22,25,53,80,110,143,443,445,993,1433,3306,3389,5432,5900,8080,8443];
+/* ── 01 · scan ─────────────────────────────────────────────────── */
+var PORTS=[22,25,53,80,110,143,443,445,993,1433,3306,3389,5432,5900,8080,8443];
 $('#btnScan').onclick=async function(){
-  const b=$('#btnScan'); b.disabled=true;
-  const o=$('#scanOut'); o.innerHTML='';
-  const w=(h)=>{o.innerHTML+=h;};
+  var b=$('#btnScan'); b.disabled=true;
+  var o=$('#scanOut'); o.innerHTML='';
+  var w=function(h){o.innerHTML+=h;};
   w('<span class="c">$</span> <span class="w">nmap -Pn national-system</span>\n\n');
-  await sleep(320);
+  await sleep(300);
   w('<span class="m">Starting scan…</span>\n');
-  for(const p of PORTS){ await sleep(85); w('<span class="m">  '+String(p).padEnd(6)+'</span><span class="r">closed</span>\n'); }
-  await sleep(260);
+  for(var i=0;i<PORTS.length;i++){
+    await sleep(80);
+    w('<span class="m">  '+String(PORTS[i]).padEnd(6)+'</span><span class="r">closed</span>\n');
+  }
+  await sleep(240);
   w('\n<span class="a">  16 ports scanned — 0 open, 0 filtered, nothing responded.</span>\n');
-  await sleep(200);
+  await sleep(190);
   w('<span class="m">  Host appears to have no services.</span>\n');
-  b.disabled=false; b.textContent='Scan again';
-  $('#btnConn').disabled=false;
+  b.disabled=false; b.textContent='Scan again'; b.classList.remove('go');
+  var c=$('#btnConn'); c.disabled=false; c.classList.add('go');
 };
 $('#btnConn').onclick=async function(){
-  const b=$('#btnConn'); b.disabled=true;
-  const o=$('#scanOut'); const w=(h)=>{o.innerHTML+=h;};
+  var b=$('#btnConn'); b.disabled=true;
+  var o=$('#scanOut'); var w=function(h){o.innerHTML+=h;};
   w('\n<span class="c">$</span> <span class="w">zeroport connect national-system:5432</span>\n\n');
-  const lines=[['  identity verified on the signed roster','g',420],
-    ['  introduced through the rendezvous — 2 hops','m',520],
-    ['  direct encrypted tunnel established','g',480],
-    ['  policy #7 permits this peer on :5432','g',360]];
-  for(const L of lines){ await sleep(L[2]); w('<span class="'+L[1]+'">'+L[0]+'</span>\n'); }
-  await sleep(280);
+  var lines=[['  identity verified on the signed roster','g',400],
+    ['  introduced through the rendezvous — 2 hops','m',500],
+    ['  direct encrypted tunnel established','g',460],
+    ['  policy #7 permits this peer on :5432','g',340]];
+  for(var i=0;i<lines.length;i++){
+    await sleep(lines[i][2]);
+    w('<span class="'+lines[i][1]+'">'+lines[i][0]+'</span>\n');
+  }
+  await sleep(260);
   w('\n<span class="g">  CONNECTED.</span> <span class="m">The scanner found nothing because there is nothing to find.</span>\n');
   w('<span class="m">  Reachability is a property of holding a key, not of an open port.</span>\n');
   b.disabled=false;
 };
 
-/* ---------- 02 lifecycle ---------- */
-const STEPS=[
-  {n:'01',t:'IDENTIFY',tech:'Nostr',bar:'',lbl:'not connected',lat:'—',latc:'var(--mut)',live:false,
-   text:'<b>Every device carries a cryptographic identity</b>, published on a directory that only a quorum of officers can sign. Before anything else happens, both ends know exactly who the other claims to be — and can prove it.'},
-  {n:'02',t:'MEET',tech:'Tor onion',bar:'slow',lbl:'VIA RENDEZVOUS · 2 HOPS',lat:'384 ms',latc:'var(--amber)',live:false,
+/* ── 02 · the journey ──────────────────────────────────────────── */
+var STEPS=[
+  {n:'01',t:'IDENTIFY',tech:'Nostr',bar:'',lbl:'not connected',lat:'—',latc:'var(--mut)',
+   text:'<b>Every device carries a cryptographic identity</b>, published on a directory only a quorum of officers can sign. Before anything else happens, both ends know exactly who the other claims to be — and can prove it.'},
+  {n:'02',t:'MEET',tech:'Tor onion',bar:'slow',lbl:'VIA RENDEZVOUS · 2 HOPS',lat:'384 ms',latc:'var(--amber)',
    text:'Neither machine has a public address, so neither can be dialled. They meet at a <b>client-authorized rendezvous</b> — an onion service whose address is derived from its own key. This lasts seconds, and carries no bulk traffic.'},
-  {n:'03',t:'CONNECT',tech:'WireGuard',bar:'act',lbl:'DIRECT TUNNEL · 1 HOP',lat:'8 ms',latc:'var(--green)',live:true,
-   text:'Now introduced, the two peers <b>hole-punch a direct encrypted tunnel</b> and the rendezvous leaves the path entirely. Traffic runs at native speed, with no third party in the middle of it.'},
-  {n:'04',t:'GOVERN',tech:'Console',bar:'act',lbl:'DIRECT TUNNEL · AUDITED',lat:'8 ms',latc:'var(--green)',live:true,
-   text:'Every flow is <b>authorized by policy, attributed to an identity, and written to a tamper-evident log</b>. The security team is not guessing from packet headers — it is reading names.'}
+  {n:'03',t:'CONNECT',tech:'WireGuard',bar:'act',lbl:'DIRECT TUNNEL · 1 HOP',lat:'8 ms',latc:'var(--green-700)',
+   text:'Now introduced, the two peers <b>hole-punch a direct encrypted tunnel</b> and the rendezvous leaves the path entirely. Traffic runs at native speed, with no third party sitting in the middle of it.'},
+  {n:'04',t:'GOVERN',tech:'Console',bar:'act',lbl:'DIRECT TUNNEL · AUDITED',lat:'8 ms',latc:'var(--green-700)',
+   text:'Every flow is <b>authorized by policy, attributed to an identity, and written to a tamper-evident log</b>. Your security team isn\'t guessing from packet headers — it\'s reading names.'}
 ];
-let cur=0;
-$('#steps').innerHTML=STEPS.map(function(s,i){return '<div class="step'+(i===0?' on':'')+'" data-i="'+i+'"><div class="n">'+s.n+'</div><div class="t">'+s.t+'</div><div class="tech">'+s.tech+'</div></div>';}).join('');
+var cur=0;
+$('#steps').innerHTML=STEPS.map(function(s,i){
+  return '<button type="button" class="step'+(i===0?' on':'')+'" data-i="'+i+'">'+
+    '<div class="n">'+s.n+'</div><div class="t">'+s.t+'</div><div class="tech">'+s.tech+'</div></button>';
+}).join('');
 function setStep(i){
-  cur=i; const s=STEPS[i];
+  cur=i; var s=STEPS[i];
   $$('.step').forEach(function(e,k){e.classList.toggle('on',k===i);});
   $('#wbar').className='wbar'+(s.bar?' '+s.bar:'');
   $('#wlbl').textContent=s.lbl;
-  const lat=$('#lat'); lat.textContent=s.lat; lat.style.color=s.latc;
-  $('#nodeB').classList.toggle('live',s.live);
+  var lat=$('#lat'); lat.textContent=s.lat; lat.style.color=s.latc;
   $('#stepText').innerHTML=s.text;
 }
 $$('.step').forEach(function(e){e.onclick=function(){setStep(+e.dataset.i);};});
 setStep(0);
-let auto=false;
-new IntersectionObserver(function(es){es.forEach(async function(e){
-  if(e.isIntersecting&&!auto){ auto=true;
-    for(let i=1;i<STEPS.length;i++){ await sleep(2100); if(cur===i-1) setStep(i); }
-  }});},{threshold:.4}).observe($('#steps'));
+if('IntersectionObserver' in window){
+  var auto=false;
+  new IntersectionObserver(function(es){es.forEach(async function(e){
+    if(e.isIntersecting&&!auto){ auto=true;
+      for(var i=1;i<STEPS.length;i++){ await sleep(2100); if(cur===i-1) setStep(i); }
+    }});},{threshold:.4}).observe($('#steps'));
+}
 
-/* ---------- 03 quorum ---------- */
-const OFFICERS=[{nm:'Officer A',sh:'share 1 of 3'},{nm:'Officer B',sh:'share 2 of 3'},{nm:'Officer C',sh:'share 3 of 3'}];
-const sel=new Set();
-$('#officers').innerHTML=OFFICERS.map(function(o,i){return '<div class="off" data-i="'+i+'"><div class="ic">&#128273;</div><div class="nm">'+o.nm+'</div><div class="sh">'+o.sh+'</div></div>';}).join('');
+/* ── 03 · quorum ───────────────────────────────────────────────── */
+var KEY='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.8 12.2 20 3M17 6l2.5 2.5M14.5 8.5 17 11"/></svg>';
+var OFFICERS=[{nm:'Officer A',sh:'share 1 of 3'},{nm:'Officer B',sh:'share 2 of 3'},{nm:'Officer C',sh:'share 3 of 3'}];
+var sel={};
+var selSize=function(){return Object.keys(sel).length;};
+$('#officers').innerHTML=OFFICERS.map(function(o,i){
+  return '<button type="button" class="off" data-i="'+i+'" aria-pressed="false">'+KEY+
+    '<div class="nm">'+o.nm+'</div><div class="sh">'+o.sh+'</div></button>';
+}).join('');
 function quorum(){
-  $$('.off').forEach(function(e,i){e.classList.toggle('sel',sel.has(i));});
-  const v=$('#qVerdict'), n=sel.size;
+  $$('.off').forEach(function(e,i){
+    var on=!!sel[i];
+    e.classList.toggle('sel',on);
+    e.setAttribute('aria-pressed',on?'true':'false');
+  });
+  var v=$('#qVerdict'), n=selSize();
   if(n===0){v.className='verdict no';v.innerHTML='Select at least one officer.';}
   else if(n===1){v.className='verdict no';
-    v.innerHTML='SIGNATURE INVALID — the roster is rejected.<span class="sub">One share cannot produce a valid signature for the group key. This is not a policy check that someone could misconfigure or bypass — the signature simply does not exist.</span>';}
+    v.innerHTML='SIGNATURE INVALID — the roster is rejected.<span class="sub">One share cannot produce a valid signature for the group key. This is not a policy check somebody could misconfigure or bypass — the signature simply does not exist.</span>';}
   else{v.className='verdict ok';
     v.innerHTML='VALID — '+n+' shares combined into ONE signature.<span class="sub">A verifier cannot tell it came from several people. With fewer than two, it could not have been produced at all.</span>';}
 }
-$$('.off').forEach(function(e){e.onclick=function(){const i=+e.dataset.i; sel.has(i)?sel.delete(i):sel.add(i); quorum();};});
+$$('.off').forEach(function(e){e.onclick=function(){
+  var i=+e.dataset.i; if(sel[i]) delete sel[i]; else sel[i]=1; quorum();
+};});
 quorum();
 
-/* ---------- 03 lease ---------- */
-let lease=60, offline=false, leaseTimer=null;
+/* ── 03 · lease ────────────────────────────────────────────────── */
+var lease=60, offline=false, leaseTimer=null;
 function leaseTick(){
-  const f=$('#leaseFill'), t=$('#leaseTxt'), v=$('#leaseVerdict');
+  var f=$('#leaseFill'), t=$('#leaseTxt'), v=$('#leaseVerdict');
   if(!offline){ lease=60; f.style.width='100%'; f.classList.remove('dead');
-    t.textContent='renewing — 60s'; t.style.color='var(--green)';
+    t.textContent='renewing — 60s'; t.style.color='var(--green-700)';
     v.className='verdict ok'; v.textContent='ACCESS ALLOWED'; return; }
   lease-=1;
   if(lease<=0){ lease=0; f.style.width='0%'; f.classList.add('dead');
     t.textContent='lease expired'; t.style.color='var(--red)';
     v.className='verdict no';
-    v.innerHTML='ACCESS DENIED — the lease was never renewed.<span class="sub">Nobody pressed revoke. Nobody had to notice the device was gone. The default state of the network is no access.</span>';
+    v.innerHTML='ACCESS DENIED — the lease was never renewed.<span class="sub">Nobody pressed revoke. Nobody had to notice the device was gone. The default state of this network is no access.</span>';
     clearInterval(leaseTimer); leaseTimer=null; return; }
   f.style.width=(lease/60*100)+'%';
   t.textContent='not renewing — '+lease+'s'; t.style.color='var(--amber)';
 }
 $('#btnSteal').onclick=function(){
-  const b=$('#btnSteal');
+  var b=$('#btnSteal');
   if(!offline){ offline=true; lease=60; b.textContent='Bring it back online';
     if(leaseTimer) clearInterval(leaseTimer);
     leaseTimer=setInterval(leaseTick,55);
@@ -445,23 +749,26 @@ $('#btnSteal').onclick=function(){
 };
 leaseTick();
 
-/* ---------- 03 audit chain ---------- */
-const ENTRIES=[
+/* ── 03 · audit chain ──────────────────────────────────────────── */
+var ENTRIES=[
   {h:'a41f…',t:'officer-laptop enrolled by 2-of-3 quorum'},
   {h:'7c9b…',t:'officer-laptop → national-system:5432 · allowed by policy #7'},
   {h:'e208…',t:'unknown peer refused — not on the signed roster'},
   {h:'3fd5…',t:'officer-laptop → national-system:22 · refused, no policy'},
   {h:'b6a0…',t:'lease renewed for officer-laptop'}
 ];
-let broken=-1;
+var broken=-1;
 function renderChain(){
   $('#chain').innerHTML=ENTRIES.map(function(e,i){
-    const b=broken>=0&&i>=broken;
-    const txt=(i===broken)?'entry altered — hash no longer matches':e.t;
-    return '<div class="clink'+(b?' broke':'')+'" data-i="'+i+'"><span class="h">#'+(i+1)+' '+(b?'&#10007;':e.h)+'</span><span class="tx">'+txt+'</span></div>';
+    var b=broken>=0&&i>=broken;
+    var txt=(i===broken)?'entry altered — hash no longer matches':e.t;
+    return '<button type="button" class="clink'+(b?' broke':'')+'" data-i="'+i+'">'+
+      '<span class="h">#'+(i+1)+' '+(b?'✗':e.h)+'</span><span class="tx">'+txt+'</span></button>';
   }).join('');
-  $$('.clink').forEach(function(e){e.onclick=function(){ const i=+e.dataset.i; broken=(broken===i)?-1:i; renderChain(); };});
-  const v=$('#chainVerdict');
+  $$('.clink').forEach(function(e){e.onclick=function(){
+    var i=+e.dataset.i; broken=(broken===i)?-1:i; renderChain();
+  };});
+  var v=$('#chainVerdict');
   if(broken<0){ v.className='verdict ok'; v.textContent='CHAIN INTACT — every link recomputes'; }
   else{ v.className='verdict no';
     v.innerHTML='CHAIN BROKEN at entry #'+(broken+1)+'.<span class="sub">Editing one line changes its hash, so every entry after it stops matching. Replacing the whole file does not help either — the head is published to an independent timestamp service, so a substituted history no longer matches the public record.</span>'; }

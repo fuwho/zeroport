@@ -1,5 +1,5 @@
 'use strict';
-// ZeroPort Operations Console - LIVE.
+// ZeroPort Operations Console.
 //
 // This is not a mockup. It starts the real network (Nostr relay, rendezvous,
 // three agents), then serves a console that shows what is actually happening:

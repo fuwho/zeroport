@@ -1,4 +1,4 @@
-# ZeroPort Operations Console — live
+# ZeroPort Operations Console
 
 This is the fourth plane, and it is **not a mockup**.
 
