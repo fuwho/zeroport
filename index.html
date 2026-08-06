@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ZeroPort — the safest port is the one you never opened</title>
 <meta name="description" content="Every VPN gateway and firewall has to listen on a public address. ZeroPort doesn't guard that door — it removes it. An interactive explanation of identity-native zero-trust access.">
-<meta name="theme-color" content="#ffffff">
+<meta name="theme-color" content="#F7F9FC">
 <meta property="og:title" content="ZeroPort — the safest port is the one you never opened">
 <meta property="og:description" content="Nothing listens. There is nothing to scan. And the people who belong still connect in seconds, at full speed.">
 <meta property="og:type" content="website">
@@ -18,12 +18,15 @@
    the actions we want taken, and the numbers we are proud of.
    ═══════════════════════════════════════════════════════════════════ */
 :root{
-  --bg:#FFFFFF; --soft:#F8FAFC; --tint:#F1F5F9;
+  --bg:#F7F9FC;      /* page canvas  */
+  --surface:#FFFFFF; /* cards, panels -- the only pure white on the page */
+  --band:#EDF2F8;    /* full-width alternating sections */
+  --soft:#F8FAFC; --tint:#F1F5F9;
   --line:#E2E8F0; --line-2:#CBD5E1;
 
   --ink:#0F172A;   /* 17.4:1 */
   --body:#475569;  /*  7.4:1 */
-  --mut:#64748B;   /*  4.9:1 */
+  --mut:#5C6B7F;   /*  4.8:1 on the darkest band, 5.4:1 on white */
 
   --blue:#2563EB;      /* 5.2:1 */
   --blue-700:#1D4ED8;  /* 7.1:1 */
@@ -32,7 +35,7 @@
   --green:#059669; --green-700:#047857;  /* 5.5:1 */
   --green-50:#ECFDF5; --green-100:#D1FAE5;
 
-  --red:#DC2626; --red-50:#FEF2F2;
+  --red:#B91C1C; --red-50:#FEF2F2;  /* 5.96:1 on the tint, 6.5:1 on white */
   --amber:#B45309; --amber-50:#FFFBEB;
 
   --mono:ui-monospace,'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;
@@ -60,13 +63,14 @@ body{
 .wrap{max-width:var(--max);margin:0 auto;padding:0 28px}
 @media(max-width:560px){.wrap{padding:0 20px}}
 section{padding:112px 0;position:relative}
+:where(section,header)[id]{scroll-margin-top:84px}
 @media(max-width:820px){section{padding:76px 0}}
 
 /* ── Type: one scale, generous rhythm, prose capped for effortless reading ── */
-h1{font-size:clamp(38px,5.4vw,66px);line-height:1.04;letter-spacing:-.032em;color:var(--ink);font-weight:800}
-h2{font-size:clamp(28px,3.4vw,42px);line-height:1.14;letter-spacing:-.024em;color:var(--ink);font-weight:750}
+h1{font-size:clamp(38px,5.4vw,66px);line-height:1.04;letter-spacing:-.032em;color:var(--ink);font-weight:800;text-wrap:balance}
+h2{font-size:clamp(28px,3.4vw,42px);line-height:1.14;letter-spacing:-.024em;color:var(--ink);font-weight:750;text-wrap:balance}
 h3{font-size:19px;line-height:1.35;letter-spacing:-.011em;color:var(--ink);font-weight:700}
-p{margin-bottom:18px;max-width:63ch}
+p{margin-bottom:18px;max-width:63ch;text-wrap:pretty}
 p:last-child{margin-bottom:0}
 .lead{font-size:clamp(17px,1.5vw,20px);line-height:1.62;color:var(--body)}
 strong{color:var(--ink);font-weight:650}
@@ -85,6 +89,20 @@ code{
 }
 .sectionhead{max-width:70ch}
 
+::selection{background:var(--blue-100);color:var(--ink)}
+::-webkit-scrollbar{width:11px;height:11px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:6px;border:3px solid var(--bg)}
+::-webkit-scrollbar-thumb:hover{background:var(--mut)}
+
+/* Keyboard users get to the content without tabbing the whole nav. */
+.skip{
+  position:absolute;left:-9999px;top:0;z-index:100;
+  background:var(--surface);color:var(--blue-700);font-weight:650;
+  padding:12px 18px;border-radius:0 0 10px 0;box-shadow:var(--sh-3);
+}
+.skip:focus{left:0}
+
 /* ── Focus: always visible, never ugly ── */
 :where(a,button,[tabindex]):focus-visible{
   outline:2px solid var(--blue);outline-offset:3px;border-radius:6px;
@@ -93,7 +111,7 @@ code{
 /* ── Navigation ───────────────────────────────────────────────────── */
 nav{
   position:sticky;top:0;z-index:60;
-  background:rgba(255,255,255,.82);backdrop-filter:saturate(180%) blur(14px);
+  background:rgba(247,249,252,.85);backdrop-filter:saturate(180%) blur(14px);
   border-bottom:1px solid var(--line);
 }
 .navin{max-width:var(--max);margin:0 auto;padding:14px 28px;display:flex;align-items:center;gap:16px}
@@ -122,7 +140,7 @@ nav{
 .btn.go{background:var(--green-700);color:#fff;box-shadow:0 1px 2px rgba(4,120,87,.28),0 6px 18px rgba(4,120,87,.22)}
 .btn.go:hover{background:#03684A;transform:translateY(-2px);box-shadow:0 3px 6px rgba(4,120,87,.26),0 14px 30px rgba(4,120,87,.26)}
 .btn.go:active{transform:translateY(0)}
-.btn.ghost{background:#fff;border-color:var(--line-2);color:var(--ink);box-shadow:var(--sh-1)}
+.btn.ghost{background:var(--surface);border-color:var(--line-2);color:var(--ink);box-shadow:var(--sh-1)}
 .btn.ghost:hover{border-color:var(--blue);color:var(--blue-700);transform:translateY(-2px);box-shadow:var(--sh-2)}
 .btn.sm{font-size:14px;padding:10px 16px;border-radius:9px}
 .cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:34px}
@@ -163,7 +181,7 @@ h1 .hl::after{
 
 /* Hero visual: two stacked cards, offset — the scan, then the officer. */
 .heroviz{position:relative;padding:10px 0}
-.vcard{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh-3);overflow:hidden}
+.vcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh-3);overflow:hidden}
 .vhead{
   display:flex;align-items:center;gap:9px;padding:12px 16px;
   border-bottom:1px solid var(--line);background:var(--soft);
@@ -181,21 +199,21 @@ h1 .hl::after{
 }
 @media(max-width:960px){.vcard.b{width:100%;margin-left:0}}
 .vcard.b .vhead{background:var(--green-50);border-bottom-color:var(--green-100);color:var(--green-700)}
-.vcard.b .vhead .chip{background:#fff;border-color:var(--green-100);color:var(--green-700)}
+.vcard.b .vhead .chip{background:var(--surface);border-color:var(--green-100);color:var(--green-700)}
 .vok{color:var(--green-700);font-weight:650}
 .vbig{font:800 30px/1 var(--sans);letter-spacing:-.03em;color:var(--ink);margin-top:4px}
 .vbig span{font-size:14px;font-weight:600;color:var(--mut);letter-spacing:0}
 
 /* ── Proof strip: honest social proof, right under the claim ─────── */
-.proof{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--soft);padding:34px 0}
+.proof{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--band);padding:34px 0}
 .proofin{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:28px;align-items:start}
-.pstat .n{font:800 clamp(26px,3vw,34px)/1 var(--sans);letter-spacing:-.03em;color:var(--green-700)}
+.pstat .n{font:800 clamp(26px,3vw,34px)/1 var(--sans);letter-spacing:-.03em;color:var(--green-700);font-variant-numeric:tabular-nums}
 .pstat .l{margin-top:8px;font-size:13.5px;line-height:1.5;color:var(--mut)}
 .pstat .l b{color:var(--ink);font-weight:650;display:block}
 
 /* ── Cards & panels ───────────────────────────────────────────────── */
 .panel{
-  background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);
   box-shadow:var(--sh-2);overflow:hidden;margin-top:28px;
   transition:box-shadow .25s var(--ease),border-color .25s var(--ease);
 }
@@ -211,7 +229,7 @@ h1 .hl::after{
 }
 .phead .chip{
   margin-left:auto;font:600 10.5px/1 var(--sans);letter-spacing:.02em;color:var(--mut);
-  background:#fff;border:1px solid var(--line);padding:5px 10px;border-radius:20px;white-space:nowrap;
+  background:var(--surface);border:1px solid var(--line);padding:5px 10px;border-radius:20px;white-space:nowrap;
 }
 .pbody{padding:24px 22px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:26px}
@@ -229,7 +247,7 @@ h1 .hl::after{
 .caret{display:inline-block;width:7px;height:14px;background:var(--blue);vertical-align:-2px;animation:bl 1.05s steps(2) infinite}
 @keyframes bl{50%{opacity:0}}
 button.act{
-  font:650 13.5px/1 var(--sans);color:var(--ink);background:#fff;
+  font:650 13.5px/1 var(--sans);color:var(--ink);background:var(--surface);
   border:1px solid var(--line-2);border-radius:9px;padding:11px 17px;cursor:pointer;
   box-shadow:var(--sh-1);
   transition:transform .16s var(--ease),border-color .16s var(--ease),color .16s var(--ease),box-shadow .16s var(--ease);
@@ -244,7 +262,7 @@ button.act.go:hover:not(:disabled){background:#03684A;border-color:#03684A;color
 .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
 @media(max-width:820px){.steps{grid-template-columns:repeat(2,1fr)}}
 .step{
-  text-align:left;background:#fff;border:1px solid var(--line);border-radius:var(--r);
+  text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
   padding:16px;cursor:pointer;box-shadow:var(--sh-1);font:inherit;color:inherit;
   transition:transform .2s var(--ease),border-color .2s var(--ease),box-shadow .2s var(--ease),background .2s var(--ease);
 }
@@ -259,7 +277,7 @@ button.act.go:hover:not(:disabled){background:#03684A;border-color:#03684A;color
 @media(max-width:640px){.wire{flex-direction:column;align-items:stretch;gap:12px}}
 .wnode{
   flex:1;text-align:center;padding:16px 12px;border-radius:var(--r);
-  background:#fff;border:1px solid var(--line);box-shadow:var(--sh-1);
+  background:var(--surface);border:1px solid var(--line);box-shadow:var(--sh-1);
 }
 .wnode .nm{font-weight:700;color:var(--ink);font-size:14px;letter-spacing:-.01em}
 .wnode .st{font:600 10px/1 var(--mono);letter-spacing:.1em;color:var(--mut);margin-top:8px}
@@ -271,7 +289,7 @@ button.act.go:hover:not(:disabled){background:#03684A;border-color:#03684A;color
 .wbar.slow::after{content:'';position:absolute;top:0;left:-38%;width:38%;height:100%;background:rgba(255,255,255,.6);animation:fl 3.4s linear infinite}
 @keyframes fl{to{left:106%}}
 .wlbl{font:600 10.5px/1.4 var(--mono);letter-spacing:.07em;margin-top:11px;color:var(--mut)}
-.lat{font:800 27px/1 var(--sans);letter-spacing:-.03em;margin-top:7px;transition:color .3s var(--ease)}
+.lat{font:800 27px/1 var(--sans);letter-spacing:-.03em;margin-top:7px;transition:color .3s var(--ease);font-variant-numeric:tabular-nums}
 .stepText{color:var(--body);font-size:15.5px;line-height:1.7;min-height:88px;max-width:66ch}
 .stepText b{color:var(--ink);font-weight:650}
 
@@ -286,7 +304,7 @@ button.act.go:hover:not(:disabled){background:#03684A;border-color:#03684A;color
 @media(max-width:560px){.officers{grid-template-columns:1fr}}
 .off{
   text-align:center;padding:16px 12px;border-radius:var(--r);cursor:pointer;font:inherit;color:inherit;
-  background:#fff;border:1px solid var(--line);box-shadow:var(--sh-1);user-select:none;
+  background:var(--surface);border:1px solid var(--line);box-shadow:var(--sh-1);user-select:none;
   transition:transform .18s var(--ease),border-color .18s var(--ease),box-shadow .18s var(--ease),background .18s var(--ease);
 }
 .off:hover{transform:translateY(-2px);border-color:var(--line-2);box-shadow:var(--sh-2)}
@@ -305,7 +323,7 @@ button.act.go:hover:not(:disabled){background:#03684A;border-color:#03684A;color
 .chain{font-family:var(--mono);font-size:12.5px}
 .clink{
   display:flex;gap:12px;align-items:baseline;padding:11px 13px;border-radius:9px;
-  border:1px solid var(--line);border-left:3px solid var(--green);background:#fff;
+  border:1px solid var(--line);border-left:3px solid var(--green);background:var(--surface);
   margin-bottom:8px;cursor:pointer;text-align:left;width:100%;font:inherit;
   transition:background .2s var(--ease),transform .2s var(--ease),border-color .2s var(--ease);
 }
@@ -321,7 +339,7 @@ button.act.go:hover:not(:disabled){background:#03684A;border-color:#03684A;color
 @media(max-width:900px){.ev{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:560px){.ev{grid-template-columns:1fr}}
 .evc{
-  background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);padding:22px;
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:22px;
   box-shadow:var(--sh-1);
   transition:transform .22s var(--ease),box-shadow .22s var(--ease),border-color .22s var(--ease);
 }
@@ -349,7 +367,7 @@ button.act.go:hover:not(:disabled){background:#03684A;border-color:#03684A;color
 
 /* ── Closing CTA ──────────────────────────────────────────────────── */
 .close{
-  text-align:center;background:var(--soft);border:1px solid var(--line);
+  text-align:center;background:var(--surface);border:1px solid var(--line);
   border-radius:var(--r-xl);padding:clamp(40px,6vw,64px) clamp(24px,5vw,56px);box-shadow:var(--sh-2);
 }
 .close h2{margin-bottom:14px}
@@ -357,7 +375,7 @@ button.act.go:hover:not(:disabled){background:#03684A;border-color:#03684A;color
 .close .cta{justify-content:center;margin-top:30px}
 
 /* ── Footer ───────────────────────────────────────────────────────── */
-footer{border-top:1px solid var(--line);padding:44px 0 60px;color:var(--mut);font-size:13.5px;background:#fff}
+footer{border-top:1px solid var(--line);padding:44px 0 60px;color:var(--mut);font-size:13.5px;background:var(--surface)}
 .fgrid{display:flex;justify-content:space-between;gap:28px;flex-wrap:wrap}
 footer a{color:var(--blue-700);text-decoration:none;font-weight:550}
 footer a:hover{text-decoration:underline}
@@ -367,7 +385,9 @@ footer a:hover{text-decoration:underline}
 </head>
 <body>
 
-<nav><div class="navin">
+<a class="skip" href="#paradox">Skip to content</a>
+
+<nav aria-label="Primary"><div class="navin">
   <a class="logo" href="#top" aria-label="ZeroPort, back to top">
     <svg width="26" height="26" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 4 L33.9 12 L33.9 28 L20 36 L6.1 28 L6.1 12 Z" fill="none" stroke="#2563EB" stroke-width="3.6"/><rect x="11.5" y="17.6" width="17" height="4.8" rx="2.4" fill="#059669"/></svg>
     <span class="w">ZEROPORT</span>
@@ -436,6 +456,8 @@ footer a:hover{text-decoration:underline}
   <div class="pstat"><div class="n">1 hop</div><div class="l"><b>After the introduction</b>The middleman leaves the path entirely</div></div>
 </div></div>
 
+<main>
+
 <section id="paradox"><div class="wrap">
   <div class="rv sectionhead">
     <div class="eyebrow">01 — The paradox</div>
@@ -464,7 +486,7 @@ footer a:hover{text-decoration:underline}
   </div>
 </div></section>
 
-<section id="how" style="background:var(--soft);border-block:1px solid var(--line)"><div class="wrap">
+<section id="how" style="background:var(--band);border-block:1px solid var(--line)"><div class="wrap">
   <div class="rv sectionhead">
     <div class="eyebrow">02 — How it works</div>
     <h2>Four steps, and then the middleman leaves.</h2>
@@ -547,7 +569,7 @@ footer a:hover{text-decoration:underline}
   </div>
 </div></section>
 
-<section id="evidence" style="background:var(--soft);border-block:1px solid var(--line)"><div class="wrap">
+<section id="evidence" style="background:var(--band);border-block:1px solid var(--line)"><div class="wrap">
   <div class="rv sectionhead">
     <div class="eyebrow">04 — Evidence</div>
     <h2>Everything above is built, and it's tested.</h2>
@@ -590,6 +612,8 @@ footer a:hover{text-decoration:underline}
     </div>
   </div>
 </div></section>
+
+</main>
 
 <footer><div class="wrap fgrid">
   <div>
