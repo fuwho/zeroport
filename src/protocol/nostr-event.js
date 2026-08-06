@@ -6,7 +6,7 @@
 // straight in: the roster event is signed by 2-of-3 officers yet looks like an
 // ordinary single-key Nostr event to any standard client.
 const crypto = require('crypto');
-const bip = require('./bip340');
+const bip = require('../crypto/bip340');
 
 const ROSTER_KIND = 30078;          // parameterised replaceable app data
 

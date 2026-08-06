@@ -10,25 +10,31 @@ Thumbs.db
 node_modules/
 .vercel/
 
-# SECRETS - never commit these.
-# hs_ed25519_secret_key IS the onion service's identity. Anyone holding it can
-# impersonate the service at that .onion address.
-demo/tor/hs/
-demo/tor/data/
-demo/tor/torrc
+# ── SECRETS — never commit these ────────────────────────────────────
+# hs_ed25519_secret_key IS the onion service's identity. Anyone holding
+# it can impersonate the service at that .onion address.
+#
+# These are path-independent on purpose: the previous rules named
+# demo/tor/hs/, and when that directory was renamed the rules silently
+# stopped matching while the keys were still on disk. Match by shape,
+# not by location.
+**/hs_ed25519_secret_key
+**/hs_ed25519_public_key
+**/hostname
+**/torrc
+**/tor/data/
+**/tor/hs/
 *_secret_key
+*.conf
 
-# WireGuard configs contain private keys
-demo/wg/*.conf
-demo/vps/*.conf
+# ── Generated at runtime ────────────────────────────────────────────
+.runtime/
+**/audit-*.log
+**/audit-*.log.ots
+**/audit-*.log.anchor.json
+**/audit-*.log.orig
+**/boot.log
 
-# Generated at runtime
-demo/audit-*.log
-demo/audit-*.log.ots
-demo/audit-*.log.anchor.json
-demo/dashboard/boot.log
-
-# Local working backups - not part of the deliverable
+# Local working backups — not part of the deliverable
 demo-backup-v1/
 *.bak
-demo/audit-*.log.orig

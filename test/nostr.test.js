@@ -3,9 +3,9 @@
 // threshold signature is accepted as an ordinary Nostr event signature.
 const { spawn } = require('child_process');
 const path = require('path');
-const nostr = require('./lib/nostr');
-const frost = require('./lib/frost');
-const bip = require('./lib/bip340');
+const nostr = require('../src/protocol/nostr-event');
+const frost = require('../src/crypto/frost');
+const bip = require('../src/crypto/bip340');
 
 const PORT = 8899;
 const results = [];
@@ -13,7 +13,7 @@ const check = (n, ok) => results.push({ name: n, ok });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 (async () => {
-  const relay = spawn(process.execPath, [path.join(__dirname, 'nostr-relay.js'), String(PORT)], { stdio: ['ignore', 'pipe', 'inherit'] });
+  const relay = spawn(process.execPath, [path.join(__dirname, '..', 'src', 'nodes', 'directory.js'), String(PORT)], { stdio: ['ignore', 'pipe', 'inherit'] });
   await new Promise((res) => relay.stdout.on('data', (d) => { if (d.toString().includes('#READY')) res(); }));
 
   // --- the SOC quorum: a real 2-of-3 FROST group ---

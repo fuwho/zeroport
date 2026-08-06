@@ -1,0 +1,22 @@
+{
+  "name": "zeroport",
+  "version": "1.0.0",
+  "description": "A private network with no listening port on the internet. Identity-native zero-trust access built from published specifications, with no third-party dependencies.",
+  "license": "MIT",
+  "repository": "github:fuwho/zeroport",
+  "engines": {
+    "node": ">=18"
+  },
+  "//": "dependencies is empty on purpose. Every primitive here is written from its specification against Node's standard library, so a reviewer can read all of it. Adding a dependency should require deleting this comment and explaining why.",
+  "dependencies": {},
+  "devDependencies": {},
+  "scripts": {
+    "demo": "node apps/walkthrough/run-demo.js --local",
+    "console": "node apps/console/server.js --local",
+    "test": "node test/run-all.js",
+    "test:crypto": "node -e \"const b=require('./src/crypto/bip340'),f=require('./src/crypto/frost');[['BIP-340',b.selftest()],['FROST',f.selftest()]].forEach(([n,r])=>console.log(n,r.filter(x=>x.ok).length+'/'+r.length))\"",
+    "test:noise": "node test/noise.test.js",
+    "test:nostr": "node test/nostr.test.js",
+    "check:layers": "node test/dependency-rule.js"
+  }
+}

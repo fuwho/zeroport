@@ -1,7 +1,7 @@
 'use strict';
 // Verify the Noise IK handshake, with emphasis on the two properties the
 // previous hand-rolled handshake did NOT have.
-const noise = require('./lib/noise');
+const noise = require('../src/crypto/noise');
 
 const results = [];
 const check = (name, ok) => results.push({ name, ok });

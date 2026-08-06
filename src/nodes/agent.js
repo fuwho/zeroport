@@ -11,11 +11,11 @@
 const dgram = require('dgram');
 const readline = require('readline');
 const crypto = require('crypto');
-const zp = require('./lib/zp');
-const noise = require('./lib/noise');
-const nostr = require('./lib/nostr');
-const nclient = require('./lib/nclient');
-const socks = require('./lib/socks');
+const zp = require('../domain/zeroport');
+const noise = require('../crypto/noise');
+const nostr = require('../protocol/nostr-event');
+const nclient = require('../transport/relay-client');
+const socks = require('../transport/socks5');
 
 const cfg = JSON.parse(process.argv[2]);
 

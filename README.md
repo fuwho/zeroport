@@ -1,99 +1,77 @@
 # ZeroPort
 
-### Zero ports. Zero trust. Zero blind spots.
+**Zero ports. Zero trust. Zero blind spots.**
 
-A private network with **no listening port on the internet** — nothing to scan, flood or
-exploit — where no single administrator can betray it, access expires on its own, and every
-flow is bound to a cryptographic identity.
+A private network with no listening port on the internet — nothing to scan, flood or exploit — where no single administrator can betray it, access expires on its own, and every flow is bound to a cryptographic identity.
 
-This repository is the **implementation**. Concept documents, the poster, the executive
-summary and the presentation script are kept separately.
+Interactive explainer: **[zeroport.vercel.app](https://zeroport.vercel.app)**
 
-> **[zeroport.vercel.app](https://zeroport.vercel.app)** — an interactive explainer of the
-> idea. It is a teaching tool and makes no network calls. The evidence is the code here.
-
----
+> The site explains the mechanism and makes no network calls. This repository is the working implementation. Presentation material, the concept documents and the run instructions live in the project's Drive, not here.
 
 ## Run it
 
-```bash
-cd demo
-node run-demo.js --slow      # six proofs, stops for a keypress before each
-node dashboard/server.js     # live operations console at http://127.0.0.1:8080
-```
-
-No dependencies to install. Node 18+.
-
-The console is not a mockup — it boots the real network and every button issues a real
-command to a real agent process.
-
-| | |
-|---|---|
-| [`demo/README.md`](demo/README.md) | full map of the implementation |
-| [`demo/transcript.txt`](demo/transcript.txt) | captured output from a real run |
-| [`demo/tor/`](demo/tor/) | real v3 onion service for the rendezvous plane |
-| [`demo/wg/`](demo/wg/) | real WireGuard kernel data plane |
-| [`demo/vps/`](demo/vps/) | second-host scripts (not yet run) |
-
-## What is built and tested
-
-| Component | Evidence |
-|---|---|
-| **BIP-340 Schnorr** identities on secp256k1 — the scheme Nostr uses | **15/15** against the official specification test vectors |
-| **FROST threshold signing** — 2-of-3 officers emit ONE 64-byte signature that passes the ordinary verifier | **13/13** (2-of-3 and 3-of-5) |
-| **Noise IK handshake** — WireGuard's own, with per-session forward secrecy and a replay window | **13/13** |
-| **NIP-01 over WebSocket** — a real Nostr relay; RFC 6455 framing written from scratch | **12/12** |
-| **Tor v3 onion service** — reached through real Tor circuits | **4/4** |
-| **WireGuard kernel interface** — peers added and removed by threshold signatures | **3/3** on a live interface |
-| **OpenTimestamps anchoring** — the audit head committed into Bitcoin | live |
-| **Six-proof run** | **6 verdicts, 0 inconclusive** |
-
-Every primitive is either Node's own audited implementation, or written against a published
-specification and checked against that specification's own test vectors.
+Node 18 or newer. **There is nothing to install.**
 
 ```bash
-node test-noise.js
-node test-nostr.js
-node -e "const r=require('./lib/bip340').selftest(); console.log(r.filter(x=>x.ok).length+'/'+r.length)"
-node -e "const r=require('./lib/frost').selftest();  console.log(r.filter(x=>x.ok).length+'/'+r.length)"
+git clone https://github.com/fuwho/zeroport.git && cd zeroport
+npm run console      # browser console at http://127.0.0.1:8080
+npm run demo         # same six steps, in the terminal
+npm test             # every suite
 ```
 
-## The result worth dwelling on
-
-WireGuard has no access control of its own — it forwards for whoever is in its peer list.
-ZeroPort supplies the identity, quorum, policy, leases and revocation it lacks.
-
-Against a real kernel interface: a roster signed by **two officers** put a real peer into the
-Windows kernel; a revocation signed by **one officer** removed it; and a roster signed by a
-**single share** was rejected as *invalid: signature verification failed*.
-
-A lone administrator is not stopped by a policy check that could be misconfigured or
-bypassed — the signature they are able to produce is not a valid signature at all. It cannot
-be made to exist.
-
-## What is not proven
-
-- **No second host.** Everything runs on one machine, so NAT traversal is not exercised and
-  there is no ping or throughput figure. The latency *ratio* in proof 2 is measured; the
-  absolute milliseconds are loopback milliseconds, and the run says so itself.
-- **A compromised endpoint remains compromised.** Its blast radius is bounded by per-port
-  policy, short leases and auto-quarantine — not eliminated.
-- **Scale.** A handful of nodes proves the mechanism, not the load of a national deployment.
+Both apps do the same real work: five processes, real sockets, real cryptography.
 
 ## Layout
 
 ```
-demo/          the implementation
-  lib/         cryptography: bip340, frost, noise, socks, nostr, ws
-  tor/         real onion service
-  wg/          real WireGuard kernel bridge
-  dashboard/   live operations console
-  vps/         second-host scripts
-index.html     the interactive explainer (deployed to Vercel)
+src/          the implementation. dependencies point inward, only.
+  crypto/       BIP-340 Schnorr, FROST, Noise IK      (Node stdlib only)
+  domain/       identity, roster, policy, audit chain (-> crypto)
+  protocol/     NIP-01 event build and verify         (-> crypto)
+  transport/    WebSocket, SOCKS5, relay client, OpenTimestamps
+  nodes/        agent, directory, rendezvous — the runnable processes
+
+apps/         delivery mechanisms. own no logic.
+  walkthrough/  the terminal walkthrough
+  console/      the browser console
+
+platform/     OS-specific adapters, swappable
+  tor/  wireguard/  vps/
+
+test/         suites, plus the dependency-rule check
+index.html    the deployed page — Vercel serves the repo root
 ```
 
-## Status
+`npm run check:layers` fails if anything under `src/` imports outward. A layering that is not enforced is a layering that rots.
 
-A hackathon proposal with a working prototype. Not production software, and not audited.
+## What is built, and tested
 
-*Independent proposal. Not an official Ministry of Interior publication.*
+No third-party dependencies. Every primitive is written from its specification against Node's standard library, which is the point — a reviewer can read all of it.
+
+| Component | Evidence |
+| :-- | :-- |
+| BIP-340 Schnorr on secp256k1 — the scheme Nostr uses | **15/15** against the specification's own test vectors |
+| FROST threshold signing — 2-of-3 emit ONE valid signature | **13/13** (2-of-3 and 3-of-5) |
+| Noise IK handshake — WireGuard's own, forward secrecy + replay window | **13/13** |
+| NIP-01 over WebSocket — a real relay, roster as a signed event | **12/12** |
+| Tor v3 onion rendezvous — over real circuits | **4/4** (opt-in, `--tor`) |
+| WireGuard kernel interface — peers controlled by threshold signatures | **3/3** on a real interface |
+| OpenTimestamps anchoring — audit head committed into Bitcoin | live |
+
+The strongest single result: **WireGuard has no access control of its own.** ZeroPort supplies the identity, quorum, policy, leases and revocation it lacks. A roster signed by two officers puts a real peer into the Windows kernel; a revocation signed by one removes it; a roster signed by a single share is rejected and the kernel never hears about it.
+
+```bash
+node platform/wireguard/wg-proof.js      # requires Administrator
+```
+
+## What is not proven
+
+- **No second host.** Everything runs on one machine, so NAT traversal is not exercised and there is no ping or throughput figure. The latency *ratio* is measured; the absolute milliseconds are loopback. Provisioning scripts for a second host are in `platform/vps/` and have not been run.
+- **A compromised endpoint stays compromised.** Per-port policy, short leases and revocation bound the blast radius; they do not eliminate it.
+- **Scale.** A handful of nodes proves the mechanism, not national load.
+
+## Licence
+
+MIT — see [LICENSE](LICENSE).
+
+*Independent hackathon proposal. Not an official Ministry of Interior publication.*

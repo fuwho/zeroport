@@ -8,7 +8,7 @@ const fs = require('fs');
 const shim = path.join(__dirname, '.tty-shim.js');
 fs.writeFileSync(shim, 'try{Object.defineProperty(process.stdin,"isTTY",{value:true,configurable:true});}catch(e){}\n');
 
-const p = spawn(process.execPath, ['--require', shim, path.join(__dirname, 'run-demo.js'), '--slow'],
+const p = spawn(process.execPath, ['--require', shim, path.join(__dirname, '..', 'apps', 'walkthrough', 'run-demo.js'), '--slow'],
   { stdio: ['pipe', 'pipe', 'inherit'] });
 
 let prompts = 0, buf = '', lastPromptAt = 0;

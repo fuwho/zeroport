@@ -14,15 +14,20 @@ const dgram = require('dgram');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const zp = require('./lib/zp');
-const bip = require('./lib/bip340');
-const frost = require('./lib/frost');
-const nostr = require('./lib/nostr');
-const nclient = require('./lib/nclient');
-const anchorSvc = require('./lib/anchor');
-const torSvc = require('./tor/start-tor');
+const zp = require('../../src/domain/zeroport');
+const bip = require('../../src/crypto/bip340');
+const frost = require('../../src/crypto/frost');
+const nostr = require('../../src/protocol/nostr-event');
+const nclient = require('../../src/transport/relay-client');
+const anchorSvc = require('../../src/transport/opentimestamps');
+const torSvc = require('../../platform/tor/start-tor');
 
-const DIR = __dirname;
+const REPO = path.join(__dirname, '..', '..');
+const NODES = path.join(REPO, 'src', 'nodes');
+// Audit logs are generated output, not source. They used to be written
+// beside the code; they now land in .runtime/ which is gitignored.
+const DIR = path.join(REPO, '.runtime');
+fs.mkdirSync(DIR, { recursive: true });
 const kids = [];
 
 // ---------- which interface do we run on ----------
@@ -103,7 +108,7 @@ async function step(title, setup) {
 
 // ---------- child processes ----------
 function launch(file, args, name) {
-  const p = spawn(process.execPath, [path.join(DIR, file), ...args], { stdio: ['pipe', 'pipe', 'pipe'] });
+  const p = spawn(process.execPath, [path.join(NODES, file), ...args], { stdio: ['pipe', 'pipe', 'pipe'] });
   p.name = name; p.events = [];
   let buf = '';
   const ready = new Promise((r) => (p._res = r));
@@ -209,7 +214,7 @@ async function scan(host, ports) {
   say('  Five processes, each a separate program, talking over real sockets.');
   console.log('');
 
-  const relay = launch('nostr-relay.js', ['8801', HOST], 'relay');
+  const relay = launch('directory.js', ['8801', HOST], 'relay');
   const rdv = launch('rendezvous.js', ['8802', HOST], 'rendezvous');
   await relay.waitReady(); await rdv.waitReady();
   res(`directory   — who exists and what they may reach   ${HOST}:8801`);

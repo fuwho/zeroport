@@ -6,8 +6,8 @@
 // it cannot forge a roster, only refuse a malformed one. Whether a roster has
 // enough officer authority is decided by the AGENTS, against the group key.
 const http = require('http');
-const ws = require('./lib/ws');
-const nostr = require('./lib/nostr');
+const ws = require('../transport/websocket');
+const nostr = require('../protocol/nostr-event');
 
 const PORT = Number(process.argv[2] || 8801);
 

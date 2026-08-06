@@ -5,7 +5,7 @@
 //   audit log : SHA-256 hash chain + signed head anchor
 const crypto = require('crypto');
 const fs = require('fs');
-const bip = require('./bip340');
+const bip = require('../crypto/bip340');
 
 // ---------- canonical JSON so signatures are deterministic ----------
 function canon(v) {

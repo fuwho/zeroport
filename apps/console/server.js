@@ -18,13 +18,17 @@ const fs = require('fs');
 const crypto = require('crypto');
 const { spawn } = require('child_process');
 const DIR = __dirname;
-const ROOT = path.join(DIR, '..');
-const zp = require(path.join(ROOT, 'lib', 'zp'));
-const bip = require(path.join(ROOT, 'lib', 'bip340'));
-const frost = require(path.join(ROOT, 'lib', 'frost'));
-const nostr = require(path.join(ROOT, 'lib', 'nostr'));
-const nclient = require(path.join(ROOT, 'lib', 'nclient'));
-const ws = require(path.join(ROOT, 'lib', 'ws'));
+const REPO = path.join(DIR, '..', '..');
+const NODES = path.join(REPO, 'src', 'nodes');
+// Generated output goes to .runtime/, not next to the source.
+const ROOT = path.join(REPO, '.runtime');
+fs.mkdirSync(ROOT, { recursive: true });
+const zp = require(path.join(REPO, 'src', 'domain', 'zeroport'));
+const bip = require(path.join(REPO, 'src', 'crypto', 'bip340'));
+const frost = require(path.join(REPO, 'src', 'crypto', 'frost'));
+const nostr = require(path.join(REPO, 'src', 'protocol', 'nostr-event'));
+const nclient = require(path.join(REPO, 'src', 'transport', 'relay-client'));
+const ws = require(path.join(REPO, 'src', 'transport', 'websocket'));
 
 function lanIP() {
   for (const a of Object.values(os.networkInterfaces()))
@@ -55,7 +59,7 @@ let anchoredHead = null;        // the head we published to an outside witness
 const log = [];                    // recent audit entries, newest last
 
 function launch(file, args, name) {
-  const p = spawn(process.execPath, [path.join(ROOT, file), ...args], { stdio: ['pipe', 'pipe', 'pipe'] });
+  const p = spawn(process.execPath, [path.join(NODES, file), ...args], { stdio: ['pipe', 'pipe', 'pipe'] });
   p.name = name; p.events = [];
   let buf = '';
   const ready = new Promise((res) => (p._res = res));
@@ -151,7 +155,7 @@ function pushState() {
 // ---------------------------------------------------------------- boot
 async function boot() {
   broadcast({ type: 'boot', message: 'starting control plane' });
-  const relay = launch('nostr-relay.js', [String(RELAY_PORT), NET_HOST], 'relay');
+  const relay = launch('directory.js', [String(RELAY_PORT), NET_HOST], 'relay');
   const rdv = launch('rendezvous.js', [String(RDV_PORT), NET_HOST], 'rendezvous');
   await relay.waitReady(); await rdv.waitReady();
 
@@ -256,7 +260,7 @@ async function handle(cmd) {
 
   if (cmd.action === 'anchor') {
     const a = await ask(agents['finance-db'].proc, { cmd: 'anchor' }, (e) => e.t === 'anchor');
-    const ext = await require(path.join(ROOT, 'lib', 'anchor')).submit(Buffer.from(a.head, 'hex'));
+    const ext = await require(path.join(REPO, 'src', 'transport', 'opentimestamps')).submit(Buffer.from(a.head, 'hex'));
     anchoredHead = a.head;
     return done({ head: a.head, ok: ext.ok, calendar: ext.ok ? ext.calendar : null });
   }

@@ -8,12 +8,12 @@
 // ZeroPort becomes, or ceases to be, a peer the kernel will accept packets from.
 const { spawn } = require('child_process');
 const path = require('path');
-const LIB = path.join(__dirname, '..', 'lib');
-const frost = require(path.join(LIB, 'frost'));
-const nostr = require(path.join(LIB, 'nostr'));
-const nclient = require(path.join(LIB, 'nclient'));
-const bip = require(path.join(LIB, 'bip340'));
-const zp = require(path.join(LIB, 'zp'));
+const SRC = path.join(__dirname, '..', '..', 'src');
+const frost = require(path.join(SRC, 'crypto', 'frost'));
+const nostr = require(path.join(SRC, 'protocol', 'nostr-event'));
+const nclient = require(path.join(SRC, 'transport', 'relay-client'));
+const bip = require(path.join(SRC, 'crypto', 'bip340'));
+const zp = require(path.join(SRC, 'domain', 'zeroport'));
 const wgc = require('./wg-control');
 
 const RELAY_PORT = 8901;
@@ -60,7 +60,7 @@ function showPeers(label) {
 
   // ---------- real control plane ----------
   step('Starting the real Nostr relay (NIP-01 over WebSocket)...');
-  const relay = spawn(process.execPath, [path.join(__dirname, '..', 'nostr-relay.js'), String(RELAY_PORT)],
+  const relay = spawn(process.execPath, [path.join(__dirname, '..', '..', 'src', 'nodes', 'directory.js'), String(RELAY_PORT)],
     { stdio: ['ignore', 'pipe', 'inherit'] });
   kids.push(relay);
   await new Promise((res) => relay.stdout.on('data', (d) => { if (d.toString().includes('#READY')) res(); }));

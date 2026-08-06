@@ -7,8 +7,8 @@
 const { spawn } = require('child_process');
 const path = require('path');
 const net = require('net');
-const ROOT = path.join(__dirname, '..');
-const socks = require(path.join(ROOT, 'lib', 'socks'));
+const ROOT = path.join(__dirname, '..', '..');
+const socks = require(path.join(ROOT, 'src', 'transport', 'socks5'));
 const tor = require('./start-tor');
 
 const RDV_PORT = 8802;
@@ -43,7 +43,7 @@ function publicallyBound(port) {
   bar('#');
   console.log('');
 
-  const rdv = spawn(process.execPath, [path.join(ROOT, 'rendezvous.js'), String(RDV_PORT)], { stdio: ['ignore', 'pipe', 'inherit'] });
+  const rdv = spawn(process.execPath, [path.join(ROOT, 'src', 'nodes', 'rendezvous.js'), String(RDV_PORT)], { stdio: ['ignore', 'pipe', 'inherit'] });
   await new Promise((r) => rdv.stdout.on('data', (d) => { if (d.toString().includes('#READY')) r(); }));
   out(`rendezvous listening on 127.0.0.1:${RDV_PORT} (loopback only)`);
 
