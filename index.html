@@ -111,6 +111,49 @@ code{
   outline:2px solid var(--blue);outline-offset:3px;border-radius:6px;
 }
 
+
+/* ── Wayfinding ────────────────────────────────────────────────────
+   Nearly seven thousand pixels of page with no sense of position. The
+   rail is the table of contents a long explainer needs: where you are,
+   what is left, and one click to any of it. Hidden where there is not
+   room for it to sit clear of the content. */
+.rail{
+  position:fixed;left:max(18px,calc((100vw - var(--max)) / 2 - 74px));top:50%;
+  transform:translateY(-50%);z-index:40;
+  display:flex;flex-direction:column;gap:2px;
+}
+@media(max-width:1240px){.rail{display:none}}
+.rail a{
+  position:relative;display:flex;align-items:center;text-decoration:none;
+  padding:9px 8px;border-radius:8px;color:var(--mut);
+  font:650 11.5px/1 var(--sans);letter-spacing:.02em;
+  transition:color .18s var(--ease);
+}
+.rail .dot{
+  flex:none;width:8px;height:8px;border-radius:50%;
+  background:var(--line-2);
+  transition:background .22s var(--ease),transform .22s var(--ease),box-shadow .22s var(--ease);
+}
+.rail .lbl{
+  position:absolute;left:24px;top:50%;margin-top:-14px;
+  white-space:nowrap;pointer-events:none;
+  background:var(--surface);border:1px solid var(--line);
+  color:var(--ink);padding:7px 11px;border-radius:8px;box-shadow:var(--sh-2);
+  opacity:0;transform:translateX(-4px);
+  transition:opacity .18s var(--ease),transform .18s var(--ease);
+}
+.rail a:hover .lbl,.rail a:focus-visible .lbl{opacity:1;transform:none}
+.rail a:hover{color:var(--ink)}
+.rail a:hover .dot{background:var(--mut)}
+.rail a.here{color:var(--ink)}
+.rail a.here .dot{
+  background:var(--green);transform:scale(1.45);
+  box-shadow:0 0 0 4px rgba(34,212,138,.14);
+}
+@media(prefers-reduced-motion:reduce){
+  .rail a,.rail .dot,.rail .lbl{transition:none}
+}
+
 /* ── Navigation ───────────────────────────────────────────────────── */
 nav{
   position:sticky;top:0;z-index:60;
@@ -118,7 +161,7 @@ nav{
   border-bottom:1px solid var(--line);
 }
 .navin{max-width:var(--max);margin:0 auto;padding:14px 28px;display:flex;align-items:center;gap:16px}
-.logo{display:inline-flex;align-items:center;gap:10px;text-decoration:none}
+.logo{display:inline-flex;align-items:center;gap:10px;text-decoration:none;padding:6px 4px;margin:-6px -4px;border-radius:8px}
 .logo .w{font-weight:800;font-size:17px;letter-spacing:.04em;color:var(--ink)}
 .navlinks{margin-left:auto;display:flex;align-items:center;gap:6px}
 .navlinks a{
@@ -461,15 +504,59 @@ button.act.go:hover:not(:disabled){background:var(--green-700);border-color:var(
 /* ── Footer ───────────────────────────────────────────────────────── */
 footer{border-top:1px solid var(--line);padding:44px 0 60px;color:var(--mut);font-size:13.5px;background:var(--surface)}
 .fgrid{display:flex;justify-content:space-between;gap:28px;flex-wrap:wrap}
-footer a{color:var(--blue-700);text-decoration:none;font-weight:550}
+footer a{color:var(--blue-700);text-decoration:none;font-weight:550;display:inline-block;padding:7px 0}
 footer a:hover{text-decoration:underline}
 .disclaim{margin-top:6px;font-size:12.5px;max-width:44ch}
 @media(max-width:640px){.fgrid>div:last-child{text-align:left!important}.disclaim{max-width:none}}
+
+/* ── Print ─────────────────────────────────────────────────────────
+   Judges print things. Sent to paper as-is this page is a solid
+   dark-green sheet: unreadable in greyscale, and it empties a toner
+   cartridge. On paper it becomes a document — ink on white, controls
+   gone, link destinations spelled out, and nothing split across a
+   page break that has to be read as one piece. */
+@media print{
+  :root{
+    --bg:#fff; --surface:#fff; --band:#fff;
+    --line:#d5dbd7; --line-2:#b6c0ba;
+    --ink:#0b1a12; --body:#26332c; --mut:#5a6b62;
+    --blue:#12457f; --blue-700:#0e3a6d; --blue-50:#fff; --blue-100:#d5dbd7;
+    --green:#0b6a49; --green-700:#0b6a49; --green-50:#fff; --green-100:#d5dbd7;
+    --red:#8f2020; --red-50:#fff; --amber:#7a4a06;
+    --sh-1:none; --sh-2:none; --sh-3:none; --sh-4:none;
+  }
+  html,body{background:#fff!important;color:var(--body)}
+  nav,.rail,.skip,.cta,.btn,button,#doScan,#doConn,.rigfoot{display:none!important}
+  .hero::before,#stage::before{display:none!important}
+  section{padding:22pt 0;break-inside:auto}
+  .wrap{max-width:none;padding:0}
+  h1{font-size:26pt}
+  h2{font-size:16pt;break-after:avoid}
+  h3,.eyebrow,.kicker{break-after:avoid}
+  p,.lead{font-size:10.5pt;line-height:1.5;max-width:none}
+  .panel,.rig,.evc,.card,.verdict,.note,.close{
+    border:1px solid var(--line)!important;box-shadow:none!important;break-inside:avoid;
+  }
+  .rigbody{grid-template-columns:1fr 1fr!important}
+  .core{display:none!important}
+  .out{min-height:0}
+  /* A reader on paper cannot follow a link, so spell it out once. */
+  a[href^="http"]::after{content:" (" attr(href) ")";font-size:8.5pt;color:var(--mut);word-break:break-all}
+  .logo a::after,.rail a::after{content:""}
+  /* Everything the reveal animation would have hidden must be on the page. */
+  .rv,html.anim .rv{opacity:1!important;transform:none!important}
+  .out .ln,.out .sum{opacity:1!important;transform:none!important}
+  footer{border-top:1px solid var(--line);padding-top:12pt}
+  @page{margin:16mm}
+}
+
 </style>
 </head>
 <body>
 
 <a class="skip" href="#paradox">Skip to content</a>
+
+<nav aria-label="Section" class="rail" id="rail"><a href="#top"><span class="dot"></span><span class="lbl">The claim</span></a><a href="#paradox"><span class="dot"></span><span class="lbl">How anyone gets in</span></a><a href="#how"><span class="dot"></span><span class="lbl">How two machines meet</span></a><a href="#safe"><span class="dot"></span><span class="lbl">Why it is safe</span></a><a href="#evidence"><span class="dot"></span><span class="lbl">Evidence</span></a></nav>
 
 <nav aria-label="Primary"><div class="navin">
   <a class="logo" href="#top" aria-label="ZeroPort, back to top">
@@ -609,7 +696,7 @@ footer a:hover{text-decoration:underline}
         </div>
         <div class="wnode" id="nodeB"><div class="nm">national-system</div><div class="st">NO OPEN PORT</div></div>
       </div>
-      <div class="stepText" id="stepText"></div>
+      <div class="stepText" id="stepText" aria-live="polite"></div>
     </div>
   </div>
 </div></section>
@@ -736,6 +823,31 @@ var $=function(s){return document.querySelector(s);};
 var $$=function(s){return Array.prototype.slice.call(document.querySelectorAll(s));};
 var sleep=function(ms){return new Promise(function(r){setTimeout(r,ms);});};
 
+/* Which section am I in? Cheap, exact, and it works whether or not the
+   compositor is running. */
+(function(){
+  var links=[].slice.call(document.querySelectorAll('#rail a'));
+  if(!links.length)return;
+  var targets=links.map(function(a){return document.querySelector(a.getAttribute('href'))});
+  var raf=0;
+  function mark(){
+    raf=0;
+    var best=0,line=innerHeight*0.34;
+    for(var i=0;i<targets.length;i++){
+      if(targets[i]&&targets[i].getBoundingClientRect().top<=line)best=i;
+    }
+    for(var j=0;j<links.length;j++){
+      links[j].classList.toggle('here',j===best);
+      if(j===best)links[j].setAttribute('aria-current','true');
+      else links[j].removeAttribute('aria-current');
+    }
+  }
+  addEventListener('scroll',function(){ if(!raf) raf=requestAnimationFrame(mark); },{passive:true});
+  addEventListener('resize',mark);
+  mark();
+  window.__railMark=mark;
+})();
+
 /* Reveal on scroll — armed only when we know we can drive it. */
 if('IntersectionObserver' in window){
   document.documentElement.classList.add('anim');
@@ -810,6 +922,7 @@ if('IntersectionObserver' in window){
         clearInterval(iv);
         node.classList.add('blocked');
         setTimeout(function () { node.classList.remove('blocked'); }, 900);
+        line(outA, '  &hellip;27 more, all refused', 'dim');
         summary(outA, '36 ports probed &middot; 0 open &middot; nothing answered');
         setTimeout(function () {
           line(outA, 'Host appears to have no services.', 'dim');
@@ -912,21 +1025,51 @@ $('#steps').innerHTML=STEPS.map(function(s,i){
 }).join('');
 function setStep(i){
   cur=i; var s=STEPS[i];
-  $$('.step').forEach(function(e,k){e.classList.toggle('on',k===i);});
+  $$('.step').forEach(function(e,k){e.classList.toggle('on',k===i);e.setAttribute('aria-pressed',k===i?'true':'false');});
   $('#wbar').className='wbar'+(s.bar?' '+s.bar:'');
   $('#wlbl').textContent=s.lbl;
   var lat=$('#lat'); lat.textContent=s.lat; lat.style.color=s.latc;
   $('#stepText').innerHTML=s.text;
 }
-$$('.step').forEach(function(e){e.onclick=function(){setStep(+e.dataset.i);};});
+$$('.step').forEach(function(e){
+  e.onclick=function(){ takeOver(); setStep(+e.dataset.i); };
+});
 setStep(0);
-if('IntersectionObserver' in window){
-  var auto=false;
-  new IntersectionObserver(function(es){es.forEach(async function(e){
-    if(e.isIntersecting&&!auto){ auto=true;
-      for(var i=1;i<STEPS.length;i++){ await sleep(2100); if(cur===i-1) setStep(i); }
-    }});},{threshold:.4}).observe($('#steps'));
+
+/* The sequence plays itself once, because the order is the point of this
+   section. But content that moves while you are reading it is the oldest
+   carousel complaint there is, so the moment the reader touches a step
+   the page hands control over and never takes it back. The old guard
+   only checked whether the current step happened to match what it
+   expected, which a reader clicking back to the start could satisfy by
+   accident -- and then the page would start moving under them again. */
+var autoTimer=null, handedOver=false;
+function takeOver(){
+  handedOver=true;
+  clearTimeout(autoTimer);
+  var st=$('#steps'); if(st) st.classList.add('manual');
 }
+$$('.step').forEach(function(e){ e.addEventListener('focus',takeOver); });
+
+function playFrom(i){
+  if(handedOver||i>=STEPS.length)return;
+  autoTimer=setTimeout(function(){
+    if(handedOver)return;
+    setStep(i);
+    playFrom(i+1);
+  },2100);
+}
+
+var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+if(!reduce&&'IntersectionObserver' in window){
+  var armed=false;
+  new IntersectionObserver(function(es){
+    es.forEach(function(e){
+      if(e.isIntersecting&&!armed){ armed=true; playFrom(1); }
+    });
+  },{threshold:.4}).observe($('#steps'));
+}
+
 
 /* ── 03 · quorum ───────────────────────────────────────────────── */
 var KEY='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.8 12.2 20 3M17 6l2.5 2.5M14.5 8.5 17 11"/></svg>';
