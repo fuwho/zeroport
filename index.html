@@ -9,7 +9,7 @@
 <meta property="og:title" content="ZeroPort — the safest port is the one you never opened">
 <meta property="og:description" content="Nothing listens. There is nothing to scan. And the people who belong still connect in seconds, at full speed.">
 <meta property="og:type" content="website">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath d='M20 4 L33.9 12 L33.9 28 L20 36 L6.1 28 L6.1 12 Z' fill='none' stroke='%232563EB' stroke-width='4'/%3E%3Crect x='11.5' y='17.6' width='17' height='4.8' rx='2.4' fill='%23059669'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath d='M20 4 L33.9 12 L33.9 28 L20 36 L6.1 28 L6.1 12 Z' fill='none' stroke='%2360A5FA' stroke-width='4'/%3E%3Crect x='11.5' y='17.6' width='17' height='4.8' rx='2.4' fill='%2322D48A'/%3E%3C/svg%3E">
 <style>
 /* ═══════════════════════════════════════════════════════════════════
    ZeroPort design tokens
@@ -170,8 +170,7 @@ html.anim .rv.in{opacity:1;transform:none}
     radial-gradient(620px 400px at 4% 94%,rgba(34,212,138,.12),transparent 64%);
 }
 .hero .wrap{position:relative;z-index:1}
-.herogrid{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);gap:clamp(36px,5vw,72px);align-items:center}
-@media(max-width:960px){.herogrid{grid-template-columns:1fr;gap:52px}}
+.herocopy{max-width:64ch}
 h1 .hl{color:var(--blue);position:relative;white-space:nowrap}
 h1 .hl::after{
   content:'';position:absolute;left:-2px;right:-2px;bottom:.06em;height:.3em;
@@ -182,30 +181,112 @@ h1 .hl::after{
 .microtrust span{display:inline-flex;align-items:center;gap:7px}
 .tick{flex:none;width:15px;height:15px;color:var(--green)}
 
-/* Hero visual: two stacked cards, offset — the scan, then the officer. */
-.heroviz{position:relative;padding:10px 0}
-.vcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh-3);overflow:hidden}
-.vhead{
-  display:flex;align-items:center;gap:9px;padding:12px 16px;
-  border-bottom:1px solid var(--line);background:var(--soft);
-  font:650 11px/1 var(--mono);letter-spacing:.11em;color:var(--mut);text-transform:uppercase;
+/* ── The instrument ────────────────────────────────────────────────
+   One machine, two doors. The attacker's side and the officer's side
+   run against the same node, and the node in the middle is the logo:
+   the aperture seals against a scan and opens for a key. The mark is
+   the diagram, so the brand is doing the thing the product does. */
+.rig{
+  margin-top:clamp(34px,4.4vw,56px);
+  background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--r-xl);box-shadow:var(--sh-3);overflow:hidden;
 }
-.vhead .chip{margin-left:auto;text-transform:none;letter-spacing:.02em;font-weight:600;font-size:10.5px;
-  color:var(--mut);background:var(--tint);border:1px solid var(--line);padding:3px 8px;border-radius:20px}
-.vbody{padding:18px 18px 20px;font-family:var(--mono);font-size:12.5px;line-height:1.85}
-.vrow{display:flex;justify-content:space-between;gap:14px;color:var(--mut)}
-.vrow b{font-weight:600;color:var(--red)}
-.vsum{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);color:var(--ink);font-weight:650}
-.vcard.b{
-  position:relative;margin:-14px 0 0 auto;width:min(92%,380px);z-index:2;
-  border-color:var(--green-100);box-shadow:var(--sh-4);
+.righead{
+  display:flex;align-items:center;gap:12px;padding:14px 20px;
+  border-bottom:1px solid var(--line);background:rgba(0,0,0,.18);
 }
-@media(max-width:960px){.vcard.b{width:100%;margin-left:0}}
-.vcard.b .vhead{background:var(--green-50);border-bottom-color:var(--green-100);color:var(--green-700)}
-.vcard.b .vhead .chip{background:var(--surface);border-color:var(--green-100);color:var(--green-700)}
-.vok{color:var(--green-700);font-weight:650}
-.vbig{font:800 30px/1 var(--sans);letter-spacing:-.03em;color:var(--ink);margin-top:4px}
-.vbig span{font-size:14px;font-weight:600;color:var(--mut);letter-spacing:0}
+.righead .t{font:700 12.5px/1.3 var(--sans);letter-spacing:.02em;color:var(--ink)}
+.righead .chip{
+  margin-left:auto;font:600 10.5px/1 var(--sans);color:var(--mut);
+  background:var(--surface);border:1px solid var(--line);
+  padding:5px 10px;border-radius:20px;white-space:nowrap;
+}
+.rigbody{display:grid;grid-template-columns:1fr minmax(180px,232px) 1fr;align-items:stretch}
+@media(max-width:900px){.rigbody{grid-template-columns:1fr}}
+
+.side{padding:clamp(18px,2vw,26px);display:flex;flex-direction:column;min-width:0}
+.side + .core + .side{border-left:1px solid var(--line)}
+@media(max-width:900px){
+  .side{border-top:1px solid var(--line)}
+  .side + .core + .side{border-left:0}
+}
+.side .who{font:700 11px/1 var(--sans);letter-spacing:.15em;text-transform:uppercase;margin-bottom:6px}
+.side.att .who{color:var(--red)}
+.side.off .who{color:var(--green)}
+.side .sub{font-size:13px;color:var(--mut);margin-bottom:16px}
+
+/* the readout each side prints into */
+.out{
+  flex:1;min-height:132px;font-family:var(--mono);font-size:12.5px;line-height:1.95;
+  color:var(--body);white-space:pre-wrap;word-break:break-word;
+}
+.out .ln{display:block;opacity:0;transform:translateY(4px);transition:opacity .3s var(--ease),transform .3s var(--ease)}
+.out .ln.in{opacity:1;transform:none}
+.out .no{color:var(--red)}
+.out .ok{color:var(--green);font-weight:600}
+.out .dim{color:var(--mut)}
+.out .hi{color:var(--blue)}
+.out .sum{
+  display:block;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line2);
+  color:var(--ink);font-weight:700;opacity:0;transition:opacity .35s var(--ease);
+}
+.out .sum.in{opacity:1}
+.ms{font-variant-numeric:tabular-nums}
+
+/* the node in the middle: the mark, as the diagram */
+.core{
+  display:grid;place-items:center;gap:14px;padding:clamp(18px,2vw,26px) 8px;
+  border-left:1px solid var(--line);border-right:1px solid var(--line);
+  background:rgba(0,0,0,.14);
+}
+@media(max-width:900px){.core{border:0;border-top:1px solid var(--line)}}
+.node{position:relative;width:clamp(104px,12vw,140px);aspect-ratio:1;display:grid;place-items:center}
+.node svg{width:100%;height:100%;overflow:visible}
+.hexline{
+  fill:none;stroke:var(--blue);stroke-width:2.6;
+  transition:stroke .4s var(--ease),filter .4s var(--ease);
+}
+.seal{
+  fill:var(--green);
+  transform-box:fill-box;transform-origin:center;
+  transition:transform .55s var(--ease),opacity .4s var(--ease),fill .4s var(--ease);
+}
+.node.blocked .hexline{stroke:var(--red);filter:drop-shadow(0 0 10px rgba(255,138,138,.5))}
+.node.blocked .seal{fill:var(--red)}
+.node.open .seal{transform:scaleX(.06);opacity:.25}
+.node.open .hexline{stroke:var(--green);filter:drop-shadow(0 0 14px rgba(34,212,138,.45))}
+/* the packet that crosses once the aperture is open */
+.pulse{
+  position:absolute;width:11px;height:11px;border-radius:50%;background:var(--green);
+  box-shadow:0 0 14px var(--green);opacity:0;left:-6px;top:50%;margin-top:-5.5px;
+}
+.node.open .pulse{animation:cross 1s var(--ease) .18s 1}
+@keyframes cross{
+  0%{opacity:0;transform:translateX(0) scale(.6)}
+  18%{opacity:1;transform:translateX(22%) scale(1)}
+  82%{opacity:1;transform:translateX(calc(100% + 4px)) scale(1)}
+  100%{opacity:0;transform:translateX(calc(100% + 30px)) scale(.6)}
+}
+.corelbl{text-align:center}
+.corelbl .n{font-weight:700;color:var(--ink);font-size:14px;letter-spacing:-.01em}
+.corelbl .s{
+  font:600 10px/1 var(--mono);letter-spacing:.1em;color:var(--mut);margin-top:7px;
+  transition:color .3s var(--ease);
+}
+.corelbl .s.sealed{color:var(--red)}
+.corelbl .s.open{color:var(--green)}
+
+.rigfoot{
+  padding:14px 20px;border-top:1px solid var(--line);background:rgba(0,0,0,.18);
+  text-align:center;font-size:13.5px;color:var(--mut);
+}
+.rigfoot b{color:var(--ink);font-weight:650}
+.rigfoot.said b{color:var(--green)}
+
+@media(prefers-reduced-motion:reduce){
+  .node.open .pulse{animation:none}
+  .out .ln,.out .sum{transition:none}
+}
 
 /* ── Proof strip: honest social proof, right under the claim ─────── */
 .proof{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--band);padding:34px 0}
@@ -404,8 +485,8 @@ footer a:hover{text-decoration:underline}
   </div>
 </div></nav>
 
-<header class="hero" id="top"><div class="wrap herogrid">
-  <div>
+<header class="hero" id="top"><div class="wrap">
+  <div class="herocopy">
     <div class="eyebrow">Identity-native zero trust</div>
     <h1>The safest port is the one you <span class="hl">never opened</span>.</h1>
     <p class="lead herosub">
@@ -428,26 +509,44 @@ footer a:hover{text-decoration:underline}
     </div>
   </div>
 
-  <div class="heroviz" aria-hidden="true">
-    <div class="vcard">
-      <div class="vhead">Attacker's scanner <span class="chip">Illustration</span></div>
-      <div class="vbody">
-        <div class="vrow"><span>22 &nbsp;ssh</span><b>closed</b></div>
-        <div class="vrow"><span>443 https</span><b>closed</b></div>
-        <div class="vrow"><span>5432 postgres</span><b>closed</b></div>
-        <div class="vrow"><span>51820 wireguard</span><b>closed</b></div>
-        <div class="vsum">16 ports · 0 open · nothing answered</div>
-      </div>
+  <div class="rig">
+    <div class="righead">
+      <span class="t">The same machine, twice</span>
+      <span class="chip">Illustration</span>
     </div>
-    <div class="vcard b">
-      <div class="vhead">Authorized officer <span class="chip">Illustration</span></div>
-      <div class="vbody">
-        <div class="vok">Connected.</div>
-        <div class="vbig">8<span> ms · direct tunnel</span></div>
-        <div style="margin-top:12px;color:var(--mut);font-size:11.5px;line-height:1.7">
-          Same machine. Same second.<br>Reachability is a property of the key, not the port.
+
+    <div class="rigbody">
+      <div class="side att">
+        <div class="who">Attacker</div>
+        <div class="sub">No invitation. Looking for something that answers.</div>
+        <div class="out" id="outA" aria-live="polite"><span class="ln in dim"># ready when you are</span></div>
+        <button class="btn go sm" id="doScan" type="button" style="margin-top:16px;align-self:flex-start">Scan every port</button>
+      </div>
+
+      <div class="core">
+        <div class="node" id="node">
+          <svg viewBox="0 0 120 120" aria-hidden="true">
+            <path class="hexline" d="M60 8 L105 34 L105 86 L60 112 L15 86 L15 34 Z"/>
+            <rect class="seal" x="34" y="53" width="52" height="14" rx="7"/>
+          </svg>
+          <span class="pulse" aria-hidden="true"></span>
+        </div>
+        <div class="corelbl">
+          <div class="n">finance-db</div>
+          <div class="s sealed" id="nodeState">NO OPEN PORT</div>
         </div>
       </div>
+
+      <div class="side off">
+        <div class="who">Officer</div>
+        <div class="sub">On the signed roster. Holds a key.</div>
+        <div class="out" id="outB" aria-live="polite"><span class="ln in dim"># ready when you are</span></div>
+        <button class="btn go sm" id="doConn" type="button" style="margin-top:16px;align-self:flex-start">Connect as the officer</button>
+      </div>
+    </div>
+
+    <div class="rigfoot" id="rigfoot">
+      Run both. They are hitting <b>the same machine</b>, in the same second.
     </div>
   </div>
 </div></header>
@@ -464,14 +563,14 @@ footer a:hover{text-decoration:underline}
 <section id="paradox"><div class="wrap">
   <div class="rv sectionhead">
     <div class="eyebrow">01 — The paradox</div>
-    <h2>Scan it. You'll find nothing.</h2>
-    <p class="lead">A scanner sweeps the internet looking for something that answers. A ZeroPort
-    service answers nothing, because nothing is listening. Which raises the obvious question:
-    how does anyone legitimate ever get in?</p>
+    <h2>So how does anyone get in?</h2>
+    <p class="lead">You have just watched a scan find nothing and an officer walk in. Both were true. Run it
+    again below, one step at a time, and watch what the machine actually does with each packet
+    it receives.</p>
   </div>
 
   <div class="panel rv">
-    <div class="phead"><span class="num">01</span><span class="t">Try it from both sides</span><span class="chip">Illustration</span></div>
+    <div class="phead"><span class="num">01</span><span class="t">The same two doors, step by step</span><span class="chip">Illustration</span></div>
     <div class="pbody">
       <div class="btnrow">
         <button class="act go" id="btnScan" type="button">Run a port scan</button>
@@ -524,7 +623,7 @@ footer a:hover{text-decoration:underline}
   </div>
 
   <div class="panel rv">
-    <div class="phead"><span class="num">01</span><span class="t">No single administrator can betray it</span><span class="chip">Illustration</span></div>
+    <div class="phead"><span class="t">No single administrator can betray it</span><span class="chip">Illustration</span></div>
     <div class="pbody">
       <p style="margin-bottom:18px">The roster is signed by a key <strong>split across three
       officers</strong>. Pick who signs, and watch what the network does about it.</p>
@@ -534,7 +633,7 @@ footer a:hover{text-decoration:underline}
   </div>
 
   <div class="panel rv">
-    <div class="phead"><span class="num">02</span><span class="t">Access expires on its own</span><span class="chip">Illustration</span></div>
+    <div class="phead"><span class="t">Access expires on its own</span><span class="chip">Illustration</span></div>
     <div class="pbody">
       <div class="grid2">
         <div>
@@ -555,7 +654,7 @@ footer a:hover{text-decoration:underline}
   </div>
 
   <div class="panel rv">
-    <div class="phead"><span class="num">03</span><span class="t">The log can't be quietly rewritten</span><span class="chip">Illustration</span></div>
+    <div class="phead"><span class="t">The log can't be quietly rewritten</span><span class="chip">Illustration</span></div>
     <div class="pbody">
       <p style="margin-bottom:18px">Every entry carries the hash of the one before it. Click any line
       to try to erase it, the way an intruder would.</p>
@@ -650,6 +749,112 @@ if('IntersectionObserver' in window){
     if(!document.querySelector('.rv.in')) document.documentElement.classList.remove('anim');
   },2200);
 }
+
+/* ── The instrument ────────────────────────────────────────────────
+   Both sides drive the same node, so running one after the other is
+   the whole argument: the scanner and the officer are looking at the
+   same machine and both are telling the truth. */
+(function () {
+  var node = $('#node'), nodeState = $('#nodeState'), foot = $('#rigfoot');
+  var outA = $('#outA'), outB = $('#outB');
+  var bScan = $('#doScan'), bConn = $('#doConn');
+  var didScan = false, didConn = false, busy = false;
+  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function clear(el) { el.innerHTML = ''; }
+  function line(el, html, cls) {
+    var s = document.createElement('span');
+    s.className = 'ln ' + (cls || '');
+    s.innerHTML = html;
+    el.appendChild(s);
+    setTimeout(function () { s.classList.add('in'); }, 20);
+    return s;
+  }
+  function summary(el, html) {
+    var s = document.createElement('span');
+    s.className = 'sum';
+    s.innerHTML = html;
+    el.appendChild(s);
+    setTimeout(function () { s.classList.add('in'); }, 20);
+  }
+  function lock(v) {
+    busy = v;
+    bScan.disabled = v; bConn.disabled = v;
+  }
+  function settle() {
+    if (didScan && didConn) {
+      foot.classList.add('said');
+      foot.innerHTML = 'Both are telling the truth. Being able to reach this machine is a property of ' +
+                       '<b>holding the right key</b> — not of an open port.';
+    }
+  }
+
+  var PORTS = [
+    ['22', 'ssh'], ['80', 'http'], ['443', 'https'], ['445', 'smb'],
+    ['3306', 'mysql'], ['3389', 'rdp'], ['5432', 'postgres'], ['8443', 'https-alt'],
+    ['51820', 'wireguard']
+  ];
+
+  bScan.onclick = function () {
+    if (busy) return;
+    lock(true);
+    clear(outA);
+    node.classList.remove('open');
+    nodeState.className = 's sealed';
+    nodeState.textContent = 'NO OPEN PORT';
+
+    line(outA, '<span class="dim">$</span> nmap -Pn finance-db');
+    var i = 0, step = reduce ? 40 : 190;
+    var iv = setInterval(function () {
+      if (i >= PORTS.length) {
+        clearInterval(iv);
+        node.classList.add('blocked');
+        setTimeout(function () { node.classList.remove('blocked'); }, 900);
+        summary(outA, '36 ports probed &middot; 0 open &middot; nothing answered');
+        setTimeout(function () {
+          line(outA, 'Host appears to have no services.', 'dim');
+          didScan = true; lock(false); settle();
+        }, 420);
+        return;
+      }
+      var p = PORTS[i++];
+      line(outA, '  ' + p[0] + ' <span class="dim">' + p[1] + '</span>  <span class="no">refused</span>');
+    }, step);
+  };
+
+  bConn.onclick = function () {
+    if (busy) return;
+    lock(true);
+    clear(outB);
+
+    var steps = [
+      ['  identity verified on the signed roster', 'ok', 440],
+      ['  introduced through the rendezvous <span class="dim">— 2 hops</span>', 'dim', 520],
+      ['  direct encrypted tunnel established', 'ok', 480],
+      ['  policy #7 permits this peer on :5432', 'ok', 360]
+    ];
+    line(outB, '<span class="dim">$</span> zeroport connect finance-db:5432');
+
+    var i = 0;
+    (function next() {
+      if (i >= steps.length) {
+        node.classList.add('open');
+        nodeState.className = 's open';
+        nodeState.textContent = 'TUNNEL OPEN';
+        setTimeout(function () {
+          summary(outB, 'ACK:SELECT 1 &middot; <span class="ms">2.0 ms</span> round trip');
+          setTimeout(function () {
+            line(outB, 'Nothing had to open. The key was enough.', 'dim');
+            didConn = true; lock(false); settle();
+          }, 420);
+        }, reduce ? 60 : 620);
+        return;
+      }
+      var s = steps[i++];
+      setTimeout(function () { line(outB, s[0], s[1]); next(); }, reduce ? 60 : s[2]);
+    })();
+  };
+})();
 
 /* ── 01 · scan ─────────────────────────────────────────────────── */
 var PORTS=[22,25,53,80,110,143,443,445,993,1433,3306,3389,5432,5900,8080,8443];
