@@ -29,6 +29,7 @@ const NODES = path.join(REPO, 'src', 'nodes');
 const DIR = path.join(REPO, '.runtime');
 fs.mkdirSync(DIR, { recursive: true });
 const kids = [];
+let tor = null;
 
 // ---------- which interface do we run on ----------
 function lanIP() {
@@ -51,6 +52,40 @@ const WAIT_KEY = SLOW && !argv.includes('--no-pause') && Boolean(process.stdin.i
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const beat = (ms) => (SLOW ? sleep(ms) : Promise.resolve());
 
+// ---------- shutdown ----------
+// This used to kill the children and call process.exit() in the same
+// tick. Everything had already printed by then, so the walkthrough
+// looked finished -- and then libuv tore the loop down while the
+// children's stdio pipes and the TLS socket left over from the
+// timestamp anchor were still closing:
+//
+//   Assertion failed: !(handle->flags & UV_HANDLE_CLOSING),
+//   file src\win\async.c, line 94
+//
+// It ended a clean run on a crash message and exit code 127, which is
+// a bad last impression for something whose whole argument is that it
+// closes things down properly. So: wait for the children to actually
+// go, then let the loop drain by itself. It does, well inside a
+// tenth of a second. The timers here are unref'd -- they are a
+// backstop for a child that will not die, and must never be the
+// reason the process stays alive.
+async function shutdown(code) {
+  // Clear tor before stopping it rather than after. The failure path calls
+  // shutdown() a second time, so a stop() that threw would be retried and
+  // throw again -- this time outside the catch block, with nothing left to
+  // catch it.
+  const onion = tor; tor = null;
+  if (onion) { try { onion.stop(); } catch { /* it is going away regardless */ } }
+  await Promise.all(kids.map((k) => new Promise((done) => {
+    if (k.exitCode !== null || k.signalCode !== null) return done();
+    const t = setTimeout(done, 2000); t.unref();
+    k.once('close', () => { clearTimeout(t); done(); });
+    k.kill();
+  })));
+  process.exitCode = code;
+  setTimeout(() => process.exit(code), 4000).unref();
+}
+
 function keypress(label) {
   return new Promise((res) => {
     process.stdout.write(`\n   ---- ${label}   [ENTER to continue, q to quit] `);
@@ -62,7 +97,9 @@ function keypress(label) {
       s.pause();
       process.stdout.write('\n');
       if (b[0] === 3 || b[0] === 113 || b[0] === 81) {
-        console.log('\n   (stopped)\n'); kids.forEach((k) => k.kill()); process.exit(0);
+        console.log('\n   (stopped)\n');
+        shutdown(0);
+        return;
       }
       res();
     });
@@ -110,18 +147,29 @@ async function step(title, setup) {
 function launch(file, args, name) {
   const p = spawn(process.execPath, [path.join(NODES, file), ...args], { stdio: ['pipe', 'pipe', 'pipe'] });
   p.name = name; p.events = [];
-  let buf = '';
-  const ready = new Promise((r) => (p._res = r));
+  let buf = '', errBuf = '';
+  // waitReady() used to be a promise only the child could settle. When a
+  // child died during startup -- port already in use being the everyday
+  // case -- nothing ever settled it, and the walkthrough either sat there
+  // forever or, once the last handle went away, exited 0 in silence. Both
+  // are worse than saying plainly what went wrong.
+  const ready = new Promise((res_, rej) => { p._res = res_; p._rej = rej; });
+  ready.catch(() => {});   // whoever awaits it still sees the rejection
   p.stdout.on('data', (d) => {
     buf += d.toString();
     let i;
     while ((i = buf.indexOf('\n')) >= 0) {
       const line = buf.slice(0, i).trim(); buf = buf.slice(i + 1);
-      if (line.startsWith('#READY ')) p._res(JSON.parse(line.slice(7)));
+      if (line.startsWith('#READY ')) { p._ready = true; p._res(JSON.parse(line.slice(7))); }
       else if (line.startsWith('#EVT ')) p.events.push(JSON.parse(line.slice(5)));
     }
   });
-  p.stderr.on('data', (d) => process.stderr.write(`[${name}] ${d}`));
+  p.stderr.on('data', (d) => { errBuf += d.toString(); process.stderr.write(`[${name}] ${d}`); });
+  p.once('exit', (code) => {
+    if (p._ready) return;
+    const why = (errBuf.match(/Error: [^\r\n]+/) || [])[0] || `it exited with code ${code}`;
+    p._rej(new Error(`the ${name} process never started — ${why}`));
+  });
   kids.push(p);
   p.waitReady = () => ready;
   return p;
@@ -220,7 +268,6 @@ async function scan(host, ports) {
   res(`directory   — who exists and what they may reach   ${HOST}:8801`);
   res(`rendezvous  — how two peers find each other        ${HOST}:8802`);
 
-  let tor = null;
   if (USE_TOR) {
     console.log('');
     res('Publishing the rendezvous as an onion service so the introduction');
@@ -284,12 +331,23 @@ async function scan(host, ports) {
 
   await act('Firing a packet straight at the agent, without credentials...');
   const raw = dgram.createSocket('udp4');
+  // We are deliberately firing at a port that will not answer -- that is the
+  // whole point of the step. On Windows an unanswered datagram comes back as
+  // an ICMP port-unreachable, and dgram turns that into an 'error' event on
+  // this socket; with no listener it is an unhandled 'error' and the
+  // walkthrough dies mid-sentence. Silence is the expected result here, so
+  // swallow it. The send callback is there for the same reason: without one,
+  // a failed send throws down that same path.
+  raw.on('error', () => {});
   const gotReply = await new Promise((r) => {
     const t = setTimeout(() => r(false), 900);
     raw.on('message', () => { clearTimeout(t); r(true); });
-    raw.send(Buffer.from('GET / HTTP/1.1\r\n\r\n'), dbR.udpPort, HOST);
+    raw.send(Buffer.from('GET / HTTP/1.1\r\n\r\n'), dbR.udpPort, HOST, () => {});
   });
-  raw.close();
+  // Wait for the handle to actually be gone rather than leaving it half-closed
+  // behind us. A closing handle that outlives the loop is exactly what this
+  // file used to end on.
+  await new Promise((done) => raw.close(done));
   res(gotReply ? 'It answered.' : 'No reply. The agent read it, found no valid signature, and stopped.');
   res('An attacker learns nothing — not even that something is there.');
 
@@ -486,11 +544,23 @@ async function scan(host, ports) {
   console.log('');
   rule('#');
   console.log('');
-  if (tor) tor.stop();
-  kids.forEach((k) => k.kill());
-  process.exit(0);
-})().catch((e) => {
-  console.error('ERROR:', e);
-  kids.forEach((k) => k.kill());
-  process.exit(1);
+  await shutdown(0);
+})().catch(async (e) => {
+  console.log('');
+  rule('!');
+  say(`  The walkthrough stopped: ${e.message}`);
+  if (/EADDRINUSE/.test(e.message)) {
+    say('');
+    say('  The directory and rendezvous need ports 8801 and 8802. Close');
+    say('  whatever is holding them and run this again.');
+  } else if (/EADDRNOTAVAIL|EACCES/.test(e.message)) {
+    say('');
+    say(`  ${HOST} is not an address this machine can bind. Run with`);
+    say('  --local to stay on 127.0.0.1, or --host with one it has.');
+  } else if (e.stack) {
+    console.error(e.stack);
+  }
+  rule('!');
+  console.log('');
+  await shutdown(1);
 });
