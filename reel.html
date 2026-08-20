@@ -103,6 +103,8 @@ button{font:700 clamp(11px,1.32vw,20px)/1 var(--sans);cursor:pointer;border-radi
 .go:hover{background:#3FE3A0;transform:translateY(-2px)}
 .ghost{background:transparent;border-color:var(--line2);color:var(--ink)}
 .ghost:hover{border-color:var(--blue);color:var(--blue)}
+.chk{display:flex;align-items:center;justify-content:center;gap:.6vw;margin-top:2.2vh;color:var(--mut);font-size:clamp(10px,1.06vw,16px);cursor:pointer}
+.chk input{width:1.1em;height:1.1em;accent-color:var(--green);cursor:pointer}
 .note{margin-top:2.8vh;font-size:clamp(10px,1.04vw,15px);color:var(--mut);line-height:1.8}
 kbd{font-family:var(--mono);background:var(--surface);border:1px solid var(--line2);border-radius:5px;padding:.2em .5em;color:var(--ink);font-size:.92em}
 @media(prefers-reduced-motion:reduce){*{transition-duration:.001ms!important}}
@@ -126,7 +128,9 @@ kbd{font-family:var(--mono);background:var(--surface);border:1px solid var(--lin
       <div class="opts">
         <button class="go" id="start">Start with narration</button>
         <button class="ghost" id="silent">Start silent (captions only)</button>
+        <button class="ghost" id="record">Record &amp; download (silent)</button>
       </div>
+      <label class="chk"><input type="checkbox" id="burn"> burn captions into the file</label>
       <div class="note">
         Record with <kbd>Win</kbd>+<kbd>G</kbd> on Windows, <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>5</kbd> on a Mac, or OBS.<br>
         Press <kbd>F</kbd> for fullscreen. Chrome or Edge give the best voices.
@@ -361,6 +365,7 @@ function show(n) {
 
 function finish() {
   cap.innerHTML = '';
+  if (REC.on) { setTimeout(recStop, 900); return; }
   gate.classList.remove('hide');
   gate.innerHTML =
     '<div><h3>That is the reel.</h3>' +
@@ -381,8 +386,102 @@ function begin(withVoice) {
   setTimeout(function () { show(0); }, 280);
 }
 
+/* ---- Record to a downloadable file -------------------------------------
+   There is no video encoder on the machine that wrote this page, so the
+   file is made where the pixels already are: the browser records its own
+   tab through MediaRecorder and hands back a .webm. Silent on purpose —
+   this is a clean plate to lay a real voice over. */
+var REC = { rec: null, chunks: [], stream: null, on: false };
+
+function recSupported() {
+  return !!(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia && window.MediaRecorder);
+}
+
+function pickMime() {
+  var want = [
+    'video/webm;codecs=vp9',
+    'video/webm;codecs=vp8',
+    'video/webm'
+  ];
+  for (var i = 0; i < want.length; i++) {
+    if (MediaRecorder.isTypeSupported(want[i])) return want[i];
+  }
+  return '';
+}
+
+function recStop() {
+  if (!REC.on) return;
+  REC.on = false;
+  try { if (REC.rec && REC.rec.state !== 'inactive') REC.rec.stop(); } catch (e) {}
+}
+
+function recSave() {
+  var type = (REC.rec && REC.rec.mimeType) || 'video/webm';
+  var blob = new Blob(REC.chunks, { type: type });
+  REC.chunks = [];
+  try { if (REC.stream) REC.stream.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
+  REC.stream = null;
+
+  var mb = (blob.size / 1048576).toFixed(1);
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'zeroport-reel-silent.webm';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function () { document.body.removeChild(a); }, 1000);
+
+  gate.classList.remove('hide');
+  gate.innerHTML =
+    '<div><h3>Saved &mdash; zeroport-reel-silent.webm</h3>' +
+    '<p>' + mb + ' MB, silent, ready for a voiceover. If the download did not start, use the button below.</p>' +
+    '<div class="opts">' +
+    '<a class="go" id="dl" href="' + url + '" download="zeroport-reel-silent.webm" ' +
+    'style="text-decoration:none;display:inline-block">Download again</a>' +
+    '<button class="ghost" id="again">Back to the start</button></div>' +
+    '<div class="note">WebM plays in Chrome, Edge, Firefox, VLC, DaVinci Resolve and Premiere.<br>' +
+    'For an MP4: <kbd>ffmpeg -i zeroport-reel-silent.webm -c:v libx264 -crf 18 zeroport-reel.mp4</kbd></div></div>';
+  document.getElementById('again').onclick = function () {
+    gate.classList.add('hide');
+    show(0);
+  };
+}
+
+function recStart() {
+  if (!recSupported()) {
+    alert('This browser cannot record a tab. Use Chrome or Edge, or record with OBS.');
+    return;
+  }
+  var caps = document.getElementById('burn') && document.getElementById('burn').checked;
+
+  navigator.mediaDevices.getDisplayMedia({
+    video: { frameRate: 30, width: { ideal: 1920 }, height: { ideal: 1080 } },
+    audio: false
+  }).then(function (stream) {
+    REC.stream = stream;
+    REC.chunks = [];
+    var mime = pickMime();
+    REC.rec = mime ? new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 6000000 })
+                   : new MediaRecorder(stream);
+    REC.rec.ondataavailable = function (e) { if (e.data && e.data.size) REC.chunks.push(e.data); };
+    REC.rec.onstop = recSave;
+    // If the user ends sharing from the browser bar, still save what we have.
+    stream.getVideoTracks()[0].onended = function () { recStop(); };
+    REC.on = true;
+    REC.rec.start(1000);
+
+    if (!caps) cap.style.display = 'none';
+    gate.classList.add('hide');
+    // A beat of clean frames before the first scene, so the cut is not abrupt.
+    setTimeout(function () { begin(false); }, 700);
+  }).catch(function () {
+    // User dismissed the picker. Nothing to clean up.
+  });
+}
+
 document.getElementById('start').onclick = function () { begin(true); };
 document.getElementById('silent').onclick = function () { begin(false); };
+document.getElementById('record').onclick = recStart;
 
 if ('speechSynthesis' in window) {
   speechSynthesis.getVoices();
