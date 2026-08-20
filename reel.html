@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ZeroPort — presenter reel</title>
+<meta name="theme-color" content="#04170F">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath d='M20 4 L33.9 12 L33.9 28 L20 36 L6.1 28 L6.1 12 Z' fill='none' stroke='%2360A5FA' stroke-width='4'/%3E%3Crect x='11.5' y='17.6' width='17' height='4.8' rx='2.4' fill='%2322D48A'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#04170F; --surface:#0A2318; --line:#17402F; --line2:#215A43;
+  --ink:#EAF6F0; --body:#B8D0C5; --mut:#8AA79A;
+  --blue:#60A5FA; --green:#22D48A; --red:#FF8A8A; --amber:#F5B942;
+  --sans:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,'SFMono-Regular',Consolas,Menlo,monospace;
+  --ease:cubic-bezier(.2,.7,.3,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:#000;color:var(--body);font-family:var(--sans);overflow:hidden;display:grid;place-items:center}
+
+/* A fixed 16:9 stage, so a screen recording crops cleanly at any window size. */
+#stage{position:relative;width:min(100vw,177.78vh);height:min(56.25vw,100vh);background:var(--bg);overflow:hidden}
+#stage::before{
+  content:'';position:absolute;inset:0;pointer-events:none;z-index:1;
+  background:
+    radial-gradient(60% 50% at 78% 6%,rgba(96,165,250,.13),transparent 66%),
+    radial-gradient(55% 45% at 5% 95%,rgba(34,212,138,.12),transparent 64%);
+}
+.scene{position:absolute;inset:0;display:grid;place-items:center;padding:6% 8% 15%;opacity:0;transform:translateY(14px);transition:opacity .5s var(--ease),transform .5s var(--ease);z-index:2}
+.scene.on{opacity:1;transform:none}
+.inner{width:100%;max-width:1180px}
+
+h1{font-size:clamp(30px,6.2vw,98px);line-height:1.02;letter-spacing:-.035em;color:var(--ink);font-weight:800}
+h2{font-size:clamp(20px,3.5vw,54px);line-height:1.12;letter-spacing:-.025em;color:var(--ink);font-weight:750}
+.lead{font-size:clamp(14px,1.85vw,28px);line-height:1.5;color:var(--body);margin-top:2.2vh}
+.eyebrow{font:700 clamp(9px,1.02vw,15px)/1 var(--sans);letter-spacing:.22em;text-transform:uppercase;color:var(--blue);margin-bottom:2.6vh;display:flex;align-items:center;gap:1vw}
+.eyebrow.mid{justify-content:center}
+.eyebrow::before{content:'';width:3.2vw;height:2px;background:var(--blue);opacity:.55;border-radius:2px}
+.hl{color:var(--green)}
+.big{font:800 clamp(38px,8.2vw,132px)/1 var(--sans);letter-spacing:-.04em;color:var(--green)}
+.big small{font-size:.26em;font-weight:650;color:var(--mut);letter-spacing:0}
+.mark{display:flex;align-items:center;gap:1.6vw;justify-content:center}
+.mark .w{font-weight:800;letter-spacing:.06em;color:var(--ink);font-size:clamp(26px,5.4vw,88px)}
+
+.term{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:2.6vh 2vw;font-family:var(--mono);font-size:clamp(10px,1.26vw,20px);line-height:1.9;box-shadow:0 24px 60px rgba(0,0,0,.45)}
+.trow{display:flex;justify-content:space-between;gap:2vw;opacity:0;transform:translateY(6px);transition:.34s var(--ease)}
+.trow.on{opacity:1;transform:none}
+.trow b{color:var(--red);font-weight:600}
+.tsum{margin-top:1.5vh;padding-top:1.5vh;border-top:1px dashed var(--line2);color:var(--ink);font-weight:700;opacity:0;transition:.42s var(--ease)}
+.tsum.on{opacity:1}
+
+.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:1.6vw}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:2.8vh 1.6vw;text-align:center;opacity:0;transform:translateY(10px);transition:.42s var(--ease)}
+.card.on{opacity:1;transform:none}
+.card.lit{border-color:var(--green);background:#0F3D2B;box-shadow:0 0 0 3px rgba(34,212,138,.14)}
+.card .k{font-size:clamp(19px,2.5vw,38px);margin-bottom:.9vh}
+.card .n{font-weight:700;color:var(--ink);font-size:clamp(11px,1.24vw,19px)}
+.card .s{font-family:var(--mono);font-size:clamp(9px,.94vw,14px);color:var(--mut);margin-top:.6vh}
+
+.verdict{margin-top:2.6vh;border-radius:12px;padding:1.9vh 1.6vw;font-weight:700;font-size:clamp(11px,1.45vw,23px);border:1px solid;opacity:0;transition:.42s var(--ease)}
+.verdict.on{opacity:1}
+.verdict.no{color:var(--red);border-color:#5A2226;background:#2A1113}
+.verdict.ok{color:var(--green);border-color:#0F4230;background:#06251A}
+
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:2vw}
+.cmp .p{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:3vh 1.8vw}
+.cmp .lbl{font:700 clamp(9px,.94vw,14px)/1 var(--sans);letter-spacing:.13em;color:var(--mut);margin-bottom:1.5vh}
+.cmp .v{font:800 clamp(24px,4.2vw,64px)/1 var(--sans);letter-spacing:-.03em}
+.cmp .d{font-size:clamp(10px,1.04vw,16px);color:var(--mut);margin-top:1.1vh}
+
+.bar{height:2.2vh;background:#0D2C1E;border:1px solid var(--line);border-radius:99px;overflow:hidden;margin:3.2vh 0 1.5vh}
+.fill{height:100%;background:linear-gradient(90deg,var(--green),#5BF0B6);width:100%;transition:width 5.4s linear}
+.fill.dead{background:var(--red)}
+.leaserow{display:flex;justify-content:space-between;font-family:var(--mono);font-size:clamp(10px,1.08vw,17px)}
+
+.chain{display:grid;gap:1.15vh}
+.blk{display:flex;gap:1.4vw;align-items:center;background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--green);border-radius:10px;padding:1.6vh 1.4vw;font-family:var(--mono);font-size:clamp(9px,1.04vw,16px);opacity:0;transform:translateX(-8px);transition:.34s var(--ease)}
+.blk.on{opacity:1;transform:none}
+.blk.bad{border-color:#5A2226;border-left-color:var(--red);background:#2A1113;color:var(--red)}
+.blk .h{color:var(--mut);min-width:7ch}
+
+.ev{display:grid;grid-template-columns:repeat(3,1fr);gap:1.4vw}
+.ev .e{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:2.3vh 1.2vw;opacity:0;transform:translateY(10px);transition:.36s var(--ease)}
+.ev .e.on{opacity:1;transform:none}
+.ev .c{font:700 clamp(11px,1.18vw,18px)/1 var(--mono);color:var(--green);letter-spacing:.03em}
+.ev .t{font-weight:700;color:var(--ink);font-size:clamp(11px,1.18vw,18px);margin-top:.9vh}
+
+#cap{position:absolute;left:0;right:0;bottom:0;z-index:4;padding:0 8% 4.6vh;text-align:center;font-size:clamp(11px,1.5vw,24px);line-height:1.45;color:var(--ink);text-shadow:0 2px 18px rgba(0,0,0,.85);pointer-events:none}
+#cap span{background:rgba(4,23,15,.72);padding:.55vh 1.1vw;border-radius:8px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+#bar{position:absolute;top:0;left:0;height:3px;background:var(--green);width:0;z-index:5;transition:width .35s linear}
+#brand{position:absolute;top:3.4vh;left:4vw;z-index:5;display:flex;align-items:center;gap:.7vw;opacity:.9}
+#brand .t{font-weight:800;letter-spacing:.09em;color:var(--ink);font-size:clamp(10px,1vw,16px)}
+#url{position:absolute;bottom:3.8vh;right:4vw;z-index:5;font-family:var(--mono);font-size:clamp(9px,.94vw,15px);color:var(--mut)}
+
+#gate{position:absolute;inset:0;z-index:9;display:grid;place-items:center;background:rgba(4,23,15,.95);backdrop-filter:blur(6px);text-align:center;padding:6%}
+#gate.hide{display:none}
+#gate h3{color:var(--ink);font-size:clamp(19px,2.9vw,42px);font-weight:750;letter-spacing:-.02em;margin-bottom:1.8vh}
+#gate p{color:var(--mut);font-size:clamp(11px,1.28vw,19px);max-width:62ch;margin:0 auto 3.2vh;line-height:1.6}
+.opts{display:flex;gap:1vw;justify-content:center;flex-wrap:wrap}
+button{font:700 clamp(11px,1.32vw,20px)/1 var(--sans);cursor:pointer;border-radius:12px;padding:1.8vh 2.2vw;border:1px solid transparent;transition:.18s var(--ease)}
+.go{background:var(--green);color:#04170F}
+.go:hover{background:#3FE3A0;transform:translateY(-2px)}
+.ghost{background:transparent;border-color:var(--line2);color:var(--ink)}
+.ghost:hover{border-color:var(--blue);color:var(--blue)}
+.note{margin-top:2.8vh;font-size:clamp(10px,1.04vw,15px);color:var(--mut);line-height:1.8}
+kbd{font-family:var(--mono);background:var(--surface);border:1px solid var(--line2);border-radius:5px;padding:.2em .5em;color:var(--ink);font-size:.92em}
+@media(prefers-reduced-motion:reduce){*{transition-duration:.001ms!important}}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="bar"></div>
+  <div id="brand">
+    <svg width="22" height="22" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 4 L33.9 12 L33.9 28 L20 36 L6.1 28 L6.1 12 Z" fill="none" stroke="#60A5FA" stroke-width="3.6"/><rect x="11.5" y="17.6" width="17" height="4.8" rx="2.4" fill="#22D48A"/></svg>
+    <span class="t">ZEROPORT</span>
+  </div>
+  <div id="url">zeroport.vercel.app</div>
+  <div id="scenes"></div>
+  <div id="cap"></div>
+
+  <div id="gate">
+    <div>
+      <h3>ZeroPort — presenter reel</h3>
+      <p>Two and a half minutes. Your browser speaks the narration, so start a screen recording first and picture and voice are captured together.</p>
+      <div class="opts">
+        <button class="go" id="start">Start with narration</button>
+        <button class="ghost" id="silent">Start silent (captions only)</button>
+      </div>
+      <div class="note">
+        Record with <kbd>Win</kbd>+<kbd>G</kbd> on Windows, <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>5</kbd> on a Mac, or OBS.<br>
+        Press <kbd>F</kbd> for fullscreen. Chrome or Edge give the best voices.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var stage = document.getElementById('scenes');
+var cap   = document.getElementById('cap');
+var bar   = document.getElementById('bar');
+var gate  = document.getElementById('gate');
+
+/* Each scene declares what is said, what is drawn, and a floor on how long it
+   stays up. A scene advances when the voice finishes OR the floor elapses,
+   whichever is later — so picture and narration stay locked together even on a
+   machine whose voice is faster or slower than the one this was timed against. */
+var SCENES = [
+{
+  say: 'ZeroPort. Zero ports. Zero trust. Zero blind spots.',
+  min: 5200,
+  html: '<div class="inner" style="text-align:center">' +
+        '<div class="mark"><svg width="84" height="84" viewBox="0 0 40 40"><path d="M20 4 L33.9 12 L33.9 28 L20 36 L6.1 28 L6.1 12 Z" fill="none" stroke="#60A5FA" stroke-width="3.4"/><rect x="11.5" y="17.6" width="17" height="4.8" rx="2.4" fill="#22D48A"/></svg>' +
+        '<span class="w">ZEROPORT</span></div>' +
+        '<div class="lead" style="margin:3.4vh auto 0;max-width:40ch">Zero ports. Zero trust. Zero blind spots.</div></div>'
+},
+{
+  say: 'Every system we protect, we first have to expose. A VPN gateway has to answer. A firewall has to answer. A bastion has to answer. That is how attackers find them, and from that moment it is a race between their scanners and our patches.',
+  min: 15500,
+  html: '<div class="inner"><div class="eyebrow">The problem</div>' +
+        '<h2>Every system we protect,<br>we first have to <span class="hl">expose</span>.</h2>' +
+        '<div class="row3" style="margin-top:5.4vh">' +
+        '<div class="card" data-in="400"><div class="n" style="color:#FF8A8A">EXPOSED</div><div class="s" style="margin-top:1.1vh">scanned around the clock</div></div>' +
+        '<div class="card" data-in="900"><div class="n" style="color:#F5B942">BLIND</div><div class="s" style="margin-top:1.1vh">IP logs cannot prove who</div></div>' +
+        '<div class="card" data-in="1400"><div class="n" style="color:#F5B942">DEPENDENT</div><div class="s" style="margin-top:1.1vh">keys held in a vendor cloud</div></div>' +
+        '</div></div>'
+},
+{
+  say: 'We did not build a better lock. We removed the door.',
+  min: 6400,
+  html: '<div class="inner" style="text-align:center"><h1>We did not build a better lock.<br><span class="hl">We removed the door.</span></h1></div>'
+},
+{
+  say: 'So look for the service the way an attacker would. Thirty six ports, probed. The database port: nothing there. The agent own socket refuses TCP entirely. Send a packet with no credentials, and there is no reply at all.',
+  min: 16000,
+  html: '<div class="inner"><div class="eyebrow">Step one &middot; scan it</div>' +
+        '<div class="term">' +
+        '<div class="trow" data-in="300"><span>22 &nbsp;ssh</span><b>closed</b></div>' +
+        '<div class="trow" data-in="950"><span>443 https</span><b>closed</b></div>' +
+        '<div class="trow" data-in="1600"><span>3389 rdp</span><b>closed</b></div>' +
+        '<div class="trow" data-in="2250"><span>5432 postgres</span><b>closed</b></div>' +
+        '<div class="trow" data-in="2900"><span>51820 wireguard</span><b>closed</b></div>' +
+        '<div class="tsum" data-in="3800">36 ports &middot; 0 open &middot; nothing answered</div>' +
+        '</div></div>'
+},
+{
+  say: 'Now an authorized officer connects to that same machine, in the same second. Connected. An encrypted round trip, in two milliseconds.',
+  min: 11500,
+  html: '<div class="inner" style="text-align:center"><div class="eyebrow mid">Step two &middot; connect anyway</div>' +
+        '<div style="color:var(--green);font-weight:800;font-size:clamp(15px,2.1vw,33px);letter-spacing:-.02em">Connected.</div>' +
+        '<div class="big" style="margin-top:2.2vh">2.0<small> ms &middot; encrypted round trip</small></div>' +
+        '<div class="lead" style="margin:3.2vh auto 0;max-width:34ch">Same machine. Same second.</div></div>'
+},
+{
+  say: 'The scanner and the officer are both telling the truth. Reachability is a property of holding the right key. Not of an open port.',
+  min: 11000,
+  html: '<div class="inner" style="text-align:center"><h2>Reachability is a property of<br>holding the <span class="hl">right key</span> &mdash;<br>not of an open port.</h2></div>'
+},
+{
+  say: 'Neither machine has a public address, so neither can be dialled. A rendezvous introduces them, and then leaves the path entirely. Ten times faster, with no third party in the middle of the conversation.',
+  min: 14500,
+  html: '<div class="inner"><div class="eyebrow">How two machines meet</div>' +
+        '<div class="cmp">' +
+        '<div class="p"><div class="lbl">VIA THE RENDEZVOUS &middot; 2 HOPS</div><div class="v" style="color:var(--amber)">20.5<span style="font-size:.4em"> ms</span></div><div class="d">it moved the bytes but could not read them</div></div>' +
+        '<div class="p"><div class="lbl">DIRECT &middot; 1 HOP</div><div class="v" style="color:var(--green)">2.0<span style="font-size:.4em"> ms</span></div><div class="d">the introducer has left the path</div></div>' +
+        '</div></div>'
+},
+{
+  say: 'Who is allowed to change the guest list? Not one administrator. One officer tries to enroll an unknown device, and it is rejected. That is not a permission error: one share cannot form a signature for the group key. A second officer co-signs, and it is accepted.',
+  min: 17500,
+  html: '<div class="inner"><div class="eyebrow">Who can change the guest list</div>' +
+        '<div class="row3">' +
+        '<div class="card lit" data-in="200"><div class="k">&#128273;</div><div class="n">Officer A</div><div class="s">share 1 of 3</div></div>' +
+        '<div class="card" data-in="200" id="offB"><div class="k">&#128273;</div><div class="n">Officer B</div><div class="s">share 2 of 3</div></div>' +
+        '<div class="card" data-in="200"><div class="k">&#128273;</div><div class="n">Officer C</div><div class="s">share 3 of 3</div></div>' +
+        '</div>' +
+        '<div class="verdict no" data-in="1000" id="v1">SIGNATURE INVALID &mdash; the roster is rejected</div>' +
+        '<div class="verdict ok" id="v2" style="display:none">VALID &mdash; two shares combined into ONE signature</div>' +
+        '</div>',
+  tick: function (el) {
+    setTimeout(function () {
+      var b = el.querySelector('#offB'); if (b) b.classList.add('lit');
+      var v1 = el.querySelector('#v1'), v2 = el.querySelector('#v2');
+      if (v1) v1.style.display = 'none';
+      if (v2) { v2.style.display = ''; setTimeout(function () { v2.classList.add('on'); }, 30); }
+    }, 10500);
+  }
+},
+{
+  say: 'A laptop is stolen. Nobody notices. Access here is a lease, and a device that goes quiet loses it on its own. Nobody pressed revoke.',
+  min: 12500,
+  html: '<div class="inner"><div class="eyebrow">What happens to a stolen laptop</div>' +
+        '<h2>Access decays unless it is renewed.</h2>' +
+        '<div class="bar"><div class="fill" id="fill"></div></div>' +
+        '<div class="leaserow"><span id="lt" style="color:var(--green)">lease valid</span><span style="color:var(--mut)">nobody is touching anything</span></div>' +
+        '<div class="verdict no" data-in="7600">ACCESS DENIED &mdash; the lease was never renewed</div></div>',
+  tick: function (el) {
+    setTimeout(function () { var f = el.querySelector('#fill'); if (f) f.style.width = '0%'; }, 700);
+    setTimeout(function () {
+      var f = el.querySelector('#fill'), t = el.querySelector('#lt');
+      if (f) f.classList.add('dead');
+      if (t) { t.textContent = 'lease expired'; t.style.color = '#FF8A8A'; }
+    }, 6300);
+  }
+},
+{
+  say: 'The log is hash chained, and its head is published to a witness we do not control. Edit one line and the fingerprints stop matching. Replace the whole file, and it fails against the published record.',
+  min: 15500,
+  html: '<div class="inner"><div class="eyebrow">The record of what happened</div>' +
+        '<div class="chain">' +
+        '<div class="blk" data-in="200"><span class="h">#1 a41f</span><span>officer-laptop enrolled by 2-of-3 quorum</span></div>' +
+        '<div class="blk" data-in="700" id="b2"><span class="h">#2 7c9b</span><span id="b2t">officer-laptop reaches national-system:5432</span></div>' +
+        '<div class="blk" data-in="1200" id="b3"><span class="h">#3 e208</span><span>unknown peer refused</span></div>' +
+        '<div class="blk" data-in="1700" id="b4"><span class="h">#4 3fd5</span><span>lease renewed</span></div>' +
+        '</div>' +
+        '<div class="verdict no" data-in="8600">CHAIN BROKEN &mdash; and the published head does not match either</div></div>',
+  tick: function (el) {
+    setTimeout(function () {
+      ['#b2', '#b3', '#b4'].forEach(function (s) { var n = el.querySelector(s); if (n) n.classList.add('bad'); });
+      var t = el.querySelector('#b2t'); if (t) t.textContent = 'entry altered — hash no longer matches';
+    }, 8000);
+  }
+},
+{
+  say: 'Sixty tests passing. Schnorr, FROST, Noise, Nostr, Tor, and a real WireGuard kernel interface. No third party dependencies. All of it readable.',
+  min: 13500,
+  html: '<div class="inner"><div class="eyebrow">What is actually built</div>' +
+        '<div class="ev">' +
+        '<div class="e" data-in="200"><div class="c">15 / 15</div><div class="t">BIP-340 Schnorr</div></div>' +
+        '<div class="e" data-in="500"><div class="c">13 / 13</div><div class="t">FROST threshold</div></div>' +
+        '<div class="e" data-in="800"><div class="c">13 / 13</div><div class="t">Noise IK handshake</div></div>' +
+        '<div class="e" data-in="1100"><div class="c">12 / 12</div><div class="t">NIP-01 over WebSocket</div></div>' +
+        '<div class="e" data-in="1400"><div class="c">4 / 4</div><div class="t">Tor v3 onion</div></div>' +
+        '<div class="e" data-in="1700"><div class="c">3 / 3</div><div class="t">WireGuard kernel</div></div>' +
+        '</div>' +
+        '<div class="lead" style="margin-top:4.2vh">No third-party dependencies. Every primitive written from its specification.</div></div>'
+},
+{
+  say: 'ZeroPort. Nothing listens, so there is nothing to scan. And the people who belong still connect in seconds, at full speed.',
+  min: 12000,
+  html: '<div class="inner" style="text-align:center">' +
+        '<div class="mark" style="margin-bottom:3.6vh"><svg width="62" height="62" viewBox="0 0 40 40"><path d="M20 4 L33.9 12 L33.9 28 L20 36 L6.1 28 L6.1 12 Z" fill="none" stroke="#60A5FA" stroke-width="3.4"/><rect x="11.5" y="17.6" width="17" height="4.8" rx="2.4" fill="#22D48A"/></svg><span class="w" style="font-size:clamp(20px,3.8vw,60px)">ZEROPORT</span></div>' +
+        '<h2>Nothing listens.<br>There is <span class="hl">nothing to scan</span>.</h2>' +
+        '<div class="lead" style="margin:3.2vh auto 0;max-width:38ch">And the people who belong still connect in seconds, at full speed.</div>' +
+        '<div style="margin-top:4.2vh;font-family:var(--mono);color:var(--blue);font-size:clamp(12px,1.5vw,24px)">zeroport.vercel.app</div></div>'
+}
+];
+
+var idx = -1, useVoice = true, current = null, timer = null;
+
+function pickVoice() {
+  var vs = (window.speechSynthesis && speechSynthesis.getVoices()) || [];
+  var want = [/Natural/i, /Aria/i, /Guy/i, /Libby/i, /Ryan/i, /Google UK English Male/i, /Google US English/i, /Daniel/i, /Samantha/i];
+  for (var w = 0; w < want.length; w++) {
+    for (var k = 0; k < vs.length; k++) {
+      if (/^en/i.test(vs[k].lang) && want[w].test(vs[k].name)) return vs[k];
+    }
+  }
+  for (var j = 0; j < vs.length; j++) { if (/^en/i.test(vs[j].lang)) return vs[j]; }
+  return null;
+}
+
+function show(n) {
+  // Any pending advance belongs to the scene we are leaving. Drop it, or a
+  // stale timer can skip a scene mid-recording.
+  clearTimeout(timer);
+  if (n >= SCENES.length) { finish(); return; }
+  idx = n;
+  var s = SCENES[n];
+
+  if (current) {
+    var old = current;
+    old.classList.remove('on');
+    setTimeout(function () { if (old.parentNode) old.parentNode.removeChild(old); }, 540);
+  }
+
+  var el = document.createElement('div');
+  el.className = 'scene';
+  el.innerHTML = s.html;
+  stage.appendChild(el);
+  setTimeout(function () { el.classList.add('on'); }, 30);
+  current = el;
+
+  var staged = el.querySelectorAll('[data-in]');
+  for (var i = 0; i < staged.length; i++) {
+    (function (node) {
+      setTimeout(function () { node.classList.add('on'); }, parseInt(node.getAttribute('data-in'), 10) + 260);
+    })(staged[i]);
+  }
+  if (s.tick) s.tick(el);
+
+  cap.innerHTML = '<span>' + s.say + '</span>';
+  bar.style.width = ((n + 1) / SCENES.length * 100) + '%';
+
+  var floor = Date.now() + s.min;
+  var advanced = false;
+  function advance() {
+    if (advanced) return;
+    advanced = true;
+    var wait = Math.max(0, floor - Date.now()) + 440;
+    clearTimeout(timer);
+    timer = setTimeout(function () { show(n + 1); }, wait);
+  }
+
+  if (useVoice && 'speechSynthesis' in window) {
+    speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(s.say);
+    var v = pickVoice();
+    if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = 'en-GB'; }
+    u.rate = 0.96; u.pitch = 1; u.volume = 1;
+    u.onend = advance;
+    u.onerror = advance;
+    speechSynthesis.speak(u);
+    // Safety net: some builds never fire onend. Never let the reel stall.
+    clearTimeout(timer);
+    timer = setTimeout(function () { if (idx === n) advance(); }, s.min + 10000);
+  } else {
+    advance();
+  }
+}
+
+function finish() {
+  cap.innerHTML = '';
+  gate.classList.remove('hide');
+  gate.innerHTML =
+    '<div><h3>That is the reel.</h3>' +
+    '<p>Stop your recording now. Replay as often as you like — nothing is saved and nothing leaves this machine.</p>' +
+    '<div class="opts"><button class="go" id="again">Play it again</button></div></div>';
+  document.getElementById('again').onclick = function () { gate.classList.add('hide'); show(0); };
+}
+
+function begin(withVoice) {
+  useVoice = withVoice;
+  gate.classList.add('hide');
+  // Chrome unlocks audio only from inside a user gesture, so prime it here.
+  if (withVoice && 'speechSynthesis' in window) {
+    var warm = new SpeechSynthesisUtterance(' ');
+    warm.volume = 0;
+    speechSynthesis.speak(warm);
+  }
+  setTimeout(function () { show(0); }, 280);
+}
+
+document.getElementById('start').onclick = function () { begin(true); };
+document.getElementById('silent').onclick = function () { begin(false); };
+
+if ('speechSynthesis' in window) {
+  speechSynthesis.getVoices();
+  speechSynthesis.onvoiceschanged = function () { speechSynthesis.getVoices(); };
+}
+
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'f' || e.key === 'F') {
+    if (!document.fullscreenElement) { document.documentElement.requestFullscreen(); }
+    else { document.exitFullscreen(); }
+  }
+});
+window.addEventListener('beforeunload', function () {
+  try { speechSynthesis.cancel(); } catch (e) {}
+});
+</script>
+</body>
+</html>
