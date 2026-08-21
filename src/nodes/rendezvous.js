@@ -7,6 +7,7 @@
 // read nothing. Once the peers are introduced it drops out of the path.
 const http = require('http');
 const dgram = require('dgram');
+const { exitWithParent } = require('./exit-with-parent');
 
 const PORT = Number(process.argv[2] || 8802);
 const endpoints = new Map();     // shortId -> { host, port }
@@ -66,6 +67,8 @@ const server = http.createServer(async (req, res) => {
 
   send(404, { error: 'not found' });
 });
+
+exitWithParent();   // likewise for 8802 - see the note in exit-with-parent.js
 
 server.listen(PORT, process.argv[3] || '127.0.0.1', () => {
   console.log(`#READY ${JSON.stringify({ plane: 'rendezvous', port: PORT })}`);

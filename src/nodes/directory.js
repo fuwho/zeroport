@@ -8,6 +8,7 @@
 const http = require('http');
 const ws = require('../transport/websocket');
 const nostr = require('../protocol/nostr-event');
+const { exitWithParent } = require('./exit-with-parent');
 
 const PORT = Number(process.argv[2] || 8801);
 
@@ -81,6 +82,8 @@ ws.attach(server, (conn) => {
     if (msg[0] === 'CLOSE') { subs.get(conn).delete(msg[1]); return; }
   });
 });
+
+exitWithParent();   // a relay outliving the walkthrough blocks the next run on 8801
 
 server.listen(PORT, process.argv[3] || '127.0.0.1', () => {
   console.log(`#READY ${JSON.stringify({ plane: 'control', protocol: 'NIP-01 over WebSocket', port: PORT })}`);

@@ -16,6 +16,7 @@ const noise = require('../crypto/noise');
 const nostr = require('../protocol/nostr-event');
 const nclient = require('../transport/relay-client');
 const socks = require('../transport/socks5');
+const { exitWithParent } = require('./exit-with-parent');
 
 const cfg = JSON.parse(process.argv[2]);
 
@@ -256,6 +257,8 @@ sock.bind(0, cfg.host || '127.0.0.1', async () => {
     name: cfg.name, id: ME, idPub: id.pub, staticPub: stat.pub.toString('hex'), udpPort: a.port,
   }));
 });
+
+exitWithParent();   // stdin EOF is a 'quit' the parent never got to send
 
 readline.createInterface({ input: process.stdin }).on('line', async (line) => {
   let c;
