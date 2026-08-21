@@ -31,20 +31,92 @@ fs.mkdirSync(DIR, { recursive: true });
 const kids = [];
 let tor = null;
 
-// ---------- which interface do we run on ----------
-function lanIP() {
-  for (const addrs of Object.values(os.networkInterfaces())) {
-    for (const a of addrs || []) if (a.family === 'IPv4' && !a.internal) return a.address;
-  }
-  return '127.0.0.1';
-}
 const argv = process.argv.slice(2);
 const argOf = (k) => { const i = argv.indexOf(k); return i >= 0 ? argv[i + 1] : null; };
-const HOST = argOf('--host') || (argv.includes('--local') ? '127.0.0.1' : lanIP());
 const USE_TOR = argv.includes('--tor');
-const ON_LAN = HOST !== '127.0.0.1';
-const RELAY_WS = `ws://${HOST}:8801`;
-const RDV = `http://${HOST}:8802`;
+
+// ---------- which interface do we run on ----------
+// The claim this demo makes is that its packets cross a real network
+// interface rather than loopback. That only holds if we pick the right
+// interface, and the old version did not: it took the first non-internal
+// IPv4 that os.networkInterfaces() happened to list. On any machine with
+// VMware, VirtualBox, Hyper-V, Docker or WSL installed, that is a
+// host-only virtual adapter — a private wire to nothing. Everything still
+// ran, and the claim quietly stopped being true. On the machine this was
+// found on it chose VMware's 192.168.43.1 over the real Wi-Fi address.
+//
+// So ask the routing table rather than guessing. Connecting a UDP socket
+// sends no packets at all; the kernel resolves the route and binds the
+// local end to the source address it would genuinely use. 192.0.2.1 is
+// TEST-NET-1 (RFC 5737) — reserved for documentation, routable nowhere —
+// so nothing here can be mistaken for the demo reaching out to a third
+// party, which matters rather a lot in this of all projects.
+function routedIP() {
+  return new Promise((done) => {
+    let s;
+    try { s = dgram.createSocket('udp4'); } catch (e) { return done(null); }
+    let settled = false;
+    const give = (v) => {
+      if (settled) return;
+      settled = true;
+      try { s.close(); } catch (e) { /* already gone */ }
+      done(v);
+    };
+    const t = setTimeout(() => give(null), 400); t.unref();
+    s.on('error', () => give(null));
+    try {
+      s.connect(53, '192.0.2.1', () => {
+        let a = null;
+        try { a = s.address().address; } catch (e) { /* fall through */ }
+        clearTimeout(t);
+        give(a && a !== '0.0.0.0' ? a : null);
+      });
+    } catch (e) { give(null); }
+  });
+}
+
+// No default route: an air-gapped machine, which is a perfectly sensible
+// place to run this. Then we are back to reading adapter names — still
+// guesswork, but guesswork that knows what a virtual adapter looks like
+// and will not hand back a link-local address with no network behind it.
+const VIRTUAL = /vmware|virtualbox|vbox|hyper-v|vethernet|docker|wsl|tailscale|zerotier|openvpn|wireguard|tunnel|tap-|teredo|isatap|bluetooth|pseudo|loopback/i;
+const PHYSICAL = /wi-?fi|wlan|^wl\d|ethernet|^en\d|^eth\d/i;
+
+function guessIface() {
+  let best = null;
+  for (const [name, addrs] of Object.entries(os.networkInterfaces())) {
+    for (const a of addrs || []) {
+      if (a.family !== 'IPv4' || a.internal) continue;
+      if (a.address.startsWith('169.254.')) continue;   // APIPA — nothing behind it
+      const score = (PHYSICAL.test(name) ? 2 : 0) - (VIRTUAL.test(name) ? 3 : 0);
+      if (!best || score > best.score) best = { ip: a.address, iface: name, score };
+    }
+  }
+  return best;
+}
+
+function ifaceOf(ip) {
+  for (const [name, addrs] of Object.entries(os.networkInterfaces())) {
+    for (const a of addrs || []) if (a.address === ip) return name;
+  }
+  return null;   // a --host the machine does not actually have
+}
+
+async function pickHost() {
+  const given = argOf('--host');
+  if (given) return { ip: given, iface: ifaceOf(given) };
+  if (argv.includes('--local')) return { ip: '127.0.0.1', iface: 'loopback' };
+  const routed = await routedIP();
+  if (routed) return { ip: routed, iface: ifaceOf(routed) };
+  const guess = guessIface();
+  if (guess) return { ip: guess.ip, iface: guess.iface };
+  return { ip: '127.0.0.1', iface: 'loopback' };
+}
+
+// Settled by pickHost() as the first thing main does, before anything
+// reads them. Choosing the interface now costs one route lookup, which
+// is why these cannot be consts any more.
+let HOST = '127.0.0.1', IFACE = 'loopback', ON_LAN = false, RELAY_WS = '', RDV = '';
 
 // ---------- pacing ----------
 const SLOW = argv.includes('--slow');
@@ -250,6 +322,12 @@ async function scan(host, ports) {
 
 // ================================================================= main
 (async () => {
+  const picked = await pickHost();
+  HOST = picked.ip; IFACE = picked.iface;
+  ON_LAN = HOST !== '127.0.0.1';
+  RELAY_WS = `ws://${HOST}:8801`;
+  RDV = `http://${HOST}:8802`;
+
   console.log('');
   rule('#');
   say('  Z E R O P O R T      a guided walkthrough');
@@ -258,7 +336,9 @@ async function scan(host, ports) {
   say('  peers still connect, at full speed, with every flow attributed.');
   rule('#');
   console.log('');
-  say(`  Running on ${ON_LAN ? 'this machine\'s network interface' : 'loopback'}: ${HOST}`);
+  if (!ON_LAN) say(`  Running on loopback: ${HOST}`);
+  else if (IFACE) say(`  Running on this machine's ${IFACE} interface: ${HOST}`);
+  else say(`  Running on ${HOST}`);
   say('  Five processes, each a separate program, talking over real sockets.');
   console.log('');
 
